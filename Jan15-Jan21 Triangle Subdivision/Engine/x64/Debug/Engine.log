@@ -1,0 +1,10 @@
+﻿  stdafx.cpp
+  DbgAssert.cpp
+  engineMath.cpp
+  Graphics.cpp
+  RenderObj.cpp
+  Shader.cpp
+  stringUtil.cpp
+  VertexBuffer.cpp
+  Generating Code...
+  Engine.vcxproj -> C:\Users\Shixuan Fang\Desktop\Direct Research\Jan15-Jan21 Triangle Subdivision\x64\Debug\Engine.lib
