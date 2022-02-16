@@ -55,5 +55,6 @@ float4 PS(g2p pIn) : SV_TARGET
         color = float4(0.0f, 0.2f, 0.4f, 1.0f);
     }*/
     //color = float4(0, 0, 0, 1);
+    return color.aaaa;
     return color;
 }

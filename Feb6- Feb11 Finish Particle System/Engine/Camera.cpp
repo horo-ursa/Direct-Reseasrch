@@ -35,6 +35,9 @@ void Camera::SetActive() {
 	pGraphics->GetDeviceContext()->PSSetConstantBuffers(
 		Graphics::CONSTANT_BUFFER_CAMERA, 1, &constBuffer
 	);
+	pGraphics->GetDeviceContext()->GSSetConstantBuffers(
+		Graphics::CONSTANT_BUFFER_CAMERA, 1, &constBuffer
+	);
 }
 
 void Camera::SetPositionAndRotation(Vector3 pos, Quaternion rot)
