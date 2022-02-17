@@ -27,6 +27,10 @@ void Camera::SetActive() {
 	cameraToWorld.Invert();
 	worldToCameraMatrix = cameraToWorld;
 	pcc.c_viewProj = worldToCameraMatrix * projMatrix;
+	pcc.Right = Vector4(Right.x, Right.y, Right.z, 1.0f);
+	pcc.Up = Vector4(Up.x, Up.y, Up.z, 1.0f);
+	pcc.c_view = worldToCameraMatrix;
+	pcc.c_proj = projMatrix;
 
 	pGraphics->UploadBuffer(constBuffer, &pcc, sizeof(pcc));
 	pGraphics->GetDeviceContext()->VSSetConstantBuffers(
@@ -59,12 +63,12 @@ void Camera::MoveBackward()
 
 void Camera::MoveLeft()
 {
-	Position += Left * MovementSpeed;
+	Position -= Right * MovementSpeed;
 }
 
 void Camera::MoveRight()
 {
-	Position -= Left * MovementSpeed;
+	Position += Right * MovementSpeed;
 }
 
 void Camera::ProcessMouseMovement(float xoffset, float yoffset) {
@@ -96,6 +100,6 @@ void Camera::updateCameraVectors() {
 	Matrix4 pitchMat = Matrix4::CreateRotationY(Math::ToRadians(-Pitch));
 	Matrix4 yawpitchMat = pitchMat * yawMat;
 	Front = yawpitchMat.GetXAxis();
-	Left = -1.0 * yawpitchMat.GetYAxis();
+	Right = yawpitchMat.GetYAxis();
 	Up = yawpitchMat.GetZAxis();
 }

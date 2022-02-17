@@ -3,8 +3,12 @@
 struct PerCameraConstants 
 {
     Matrix4 c_viewProj;
+    Vector4 Right;
+    Vector4 Up;
+    Matrix4 c_view;
+    Matrix4 c_proj;
     Vector3 c_cameraPosition;
-    float padding = 0.0f;
+    float padding3 = 0.0f;
 };
 
 class Graphics;
@@ -38,7 +42,7 @@ protected:
     Vector3 Position;
     Vector3 Front;
     Vector3 Up;
-    Vector3 Left;
+    Vector3 Right;
     Vector3 WorldUp;
     //Euler Angles
     float Yaw;

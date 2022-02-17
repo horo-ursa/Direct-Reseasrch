@@ -16,6 +16,8 @@ Graphics::Graphics()
     , mDevCon(nullptr)
     , mBackBuffer(nullptr)
     , mCurrentRenderTarget(nullptr)
+    , mDepthState(nullptr)
+    , mDepthAlphaState(nullptr)
 {
     DbgAssert(nullptr == s_theGraphics, "You can only have 1 Graphics");
     s_theGraphics = this;
@@ -90,7 +92,9 @@ void Graphics::InitD3D(HWND hWnd, float width, float height)
     //setup state and create depthstencil
     state = CreateDepthStencilState(D3D11_COMPARISON_LESS);
     mDevCon->OMSetDepthStencilState(state, 0);
-    CreateDepthStencil(width, height, &texture, &DepthView);
+    CreateDepthStencil(width, height, &texture, &mDepthView);
+    mDepthState = CreateDepthStencilState(true, D3D11_COMPARISON_LESS_EQUAL);
+    mDepthAlphaState = CreateDepthStencilState(true, D3D11_COMPARISON_LESS_EQUAL, false);
     
     //setup SamplerState
     D3D11_SAMPLER_DESC sampDesc;
@@ -143,13 +147,40 @@ void Graphics::CleanD3D()
 
     state->Release();
     texture->Release();
-    DepthView->Release();
+    mDepthState->Release();
+    mDepthAlphaState->Release();
+    mDepthView->Release();
     SamplerState->Release();
 
 #ifdef _DEBUG
     pDbg->ReportLiveDeviceObjects(D3D11_RLDO_DETAIL | D3D11_RLDO_IGNORE_INTERNAL);
     pDbg->Release();
 #endif
+}
+
+
+ID3D11DepthStencilState* Graphics::CreateDepthStencilState(bool inDepthTestEnable, D3D11_COMPARISON_FUNC inDepthComparisonFunction, bool inDepthWriteEnable)
+{
+    D3D11_DEPTH_STENCIL_DESC dsDesc;
+    dsDesc.DepthEnable = true;
+    dsDesc.DepthWriteMask = inDepthWriteEnable ? D3D11_DEPTH_WRITE_MASK_ALL : D3D11_DEPTH_WRITE_MASK_ZERO;
+    dsDesc.DepthFunc = inDepthComparisonFunction;
+    dsDesc.StencilEnable = false;
+    dsDesc.StencilReadMask = 0xFF;
+    dsDesc.StencilWriteMask = 0xFF;
+    dsDesc.FrontFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
+    dsDesc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_INCR;
+    dsDesc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
+    dsDesc.FrontFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
+    dsDesc.BackFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
+    dsDesc.BackFace.StencilDepthFailOp = D3D11_STENCIL_OP_DECR;
+    dsDesc.BackFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
+    dsDesc.BackFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
+
+    ID3D11DepthStencilState* depthState = nullptr;
+    HRESULT hr = mDev->CreateDepthStencilState(&dsDesc, &depthState);
+
+    return depthState;
 }
 
 void Graphics::SetRenderTarget(ID3D11RenderTargetView* renderTarget, ID3D11DepthStencilView* view)
@@ -282,4 +313,39 @@ void Graphics::SetActiveSampler(int slot, ID3D11SamplerState* pSampler)
 {
     //assume 1 again
     mDevCon->PSSetSamplers(slot, 1, &pSampler);
+}
+
+ID3D11BlendState* Graphics::CreateBlendState(bool enable, D3D11_BLEND srcBlend, D3D11_BLEND dstBlend)
+{
+    D3D11_BLEND_DESC desc;
+    ZeroMemory(&desc, sizeof(desc));
+    desc.RenderTarget[0].BlendEnable = enable;
+    desc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+    desc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+    desc.RenderTarget[0].DestBlend = dstBlend;
+    desc.RenderTarget[0].DestBlendAlpha = dstBlend;
+    desc.RenderTarget[0].RenderTargetWriteMask = 0x0f;
+    desc.RenderTarget[0].SrcBlend = srcBlend;
+    desc.RenderTarget[0].SrcBlendAlpha = srcBlend;
+    ID3D11BlendState* blendState = nullptr;
+    HRESULT hr = mDev->CreateBlendState(&desc, &blendState);
+    DbgAssert(S_OK == hr, "Unable to create blend state");
+    return blendState;
+}
+
+void Graphics::SetBlendState(ID3D11BlendState* inBlendState)
+{
+    float blendFactor[4];
+
+    // Setup the blend factor.
+    blendFactor[0] = 0.0f;
+    blendFactor[1] = 0.0f;
+    blendFactor[2] = 0.0f;
+    blendFactor[3] = 0.0f;
+    mDevCon->OMSetBlendState(inBlendState, blendFactor, 0xffffffff);
+}
+
+void Graphics::BeginAlpha()
+{
+    mDevCon->OMSetDepthStencilState(mDepthAlphaState, 0);
 }

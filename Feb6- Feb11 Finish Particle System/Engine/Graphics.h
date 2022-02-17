@@ -60,11 +60,14 @@ public:
     ID3D11DepthStencilState* CreateDepthStencilState(D3D11_COMPARISON_FUNC inDepthComparisonFunction);
     bool CreateDepthStencil(int inWidth, int inHeight,
         ID3D11Texture2D** pDepthTexture, ID3D11DepthStencilView** pDepthView);
-    ID3D11DepthStencilView* GetView() { return DepthView; }
+    ID3D11DepthStencilView* GetView() { return mDepthView; }
     void ClearDepthBuffer(ID3D11DepthStencilView* depthView, float depth);
     void SetActiveTexture(int slot, ID3D11ShaderResourceView* pView);
     void SetActiveSampler(int slot, ID3D11SamplerState* pSampler);
-
+    ID3D11DepthStencilState* CreateDepthStencilState(bool inDepthTestEnable, D3D11_COMPARISON_FUNC inDepthComparisonFunction, bool inDepthWriteEnable = true);
+    ID3D11BlendState* CreateBlendState(bool enable, D3D11_BLEND srcBlend, D3D11_BLEND dstBlend);
+    void SetBlendState(ID3D11BlendState* inBlendState);
+    void BeginAlpha();
 
 private:
     static Graphics* s_theGraphics;
@@ -81,6 +84,9 @@ private:
     ID3D11DepthStencilState* state;
 
     ID3D11Texture2D* texture;
-    ID3D11DepthStencilView* DepthView;
     ID3D11SamplerState* SamplerState;
+
+    ID3D11DepthStencilView* mDepthView;
+    ID3D11DepthStencilState* mDepthAlphaState;
+    ID3D11DepthStencilState* mDepthState;
 };

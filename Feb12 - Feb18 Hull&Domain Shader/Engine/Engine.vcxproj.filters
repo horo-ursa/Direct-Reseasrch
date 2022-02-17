@@ -20,6 +20,9 @@
     <Filter Include="Source Files\imgui">
       <UniqueIdentifier>{ada04045-ca80-4712-babc-4b580d2bdbae}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\ParticleSystem">
+      <UniqueIdentifier>{55c9cf5a-17a6-4362-bc16-9d7761b5dd5a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="assetManager.cpp">
@@ -87,6 +90,9 @@
     </ClCompile>
     <ClCompile Include="imgui\imgui_widgets.cpp">
       <Filter>Source Files\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="ParticleEmitter.cpp">
+      <Filter>Source Files\ParticleSystem</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -164,6 +170,9 @@
     </ClInclude>
     <ClInclude Include="imgui\imconfig.h">
       <Filter>Source Files\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="ParticleEmitter.h">
+      <Filter>Source Files\ParticleSystem</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

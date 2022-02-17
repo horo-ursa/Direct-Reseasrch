@@ -4,6 +4,10 @@
 cbuffer PerCameraConstants : register(b0)
 {
     float4x4 c_viewProj;
+    float4 Right;
+    float4 Up;
+    float4x4 c_view;
+    float4x4 c_proj;
     float3 c_cameraPosition;
 };
 

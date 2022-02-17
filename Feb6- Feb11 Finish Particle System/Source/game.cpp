@@ -125,7 +125,7 @@ void Game::Init(HWND hWnd, float width, float height)
 	gsShader->Load(L"Shaders/Particle.hlsl", GeometryShaderDesc, ARRAY_SIZE(GeometryShaderDesc));
 
 	Texture* mTex = new Texture();
-	mTex->Load(L"Assets/Textures/snow.png");
+	mTex->Load(L"Assets/Textures/Cloud.png");
 
 	Material* mMaterial = new Material();
 	mMaterial->SetShader(gsShader);
@@ -133,15 +133,20 @@ void Game::Init(HWND hWnd, float width, float height)
 
 	ParticleVertex vert[] =
 	{
-		{ Vector3(-100.0f, 100.f, 150.0f)},
-		{ Vector3(-300.f, -200.f, 80.f)},
-		{ Vector3(-0.45f, -0.5f, 0.0f)},
-		{ Vector3(0.7f, -0.6f, 0.0f)},
-		{ Vector3(0.3f, -0.2f, 0.0f)},
-		{ Vector3(-0.4f, 0.3f, 0.0f)},
-		{ Vector3(0.1f, 0.1f, 0.0f)}
+		{ Vector3(100.0f, 100.f, 150.0f)},
+		{ Vector3(300.f, -200.f, 80.f)},
+		{ Vector3(500.f, 12.5f, 50.0f)},
+		{ Vector3(200.f, 54.5f, 20.0f)},
+		{ Vector3(160.f, 345.5f, 400.0f)},
+		{ Vector3(240.f, 430.5f, 120.0f)},
+		{ Vector3(340.f, -236.5f, 340.0f)},
+		{ Vector3(54.f, -76.5f, 170.0f)},
+		{ Vector3(23.f, -324.5f, 30.0f)},
+		{ Vector3(15.f, -54.5f, 250.0f)},
+		{ Vector3(672.f, -670.5f, 650.0f)}
 	};
 	VertexBuffer* vBuffer = new VertexBuffer(vert, sizeof(vert) / sizeof(vert[0]), sizeof(ParticleVertex), nullptr, NULL, NULL);
+	
 	mMesh = new Mesh(vBuffer, mMaterial);
 	particles = new RenderObj(mMesh);
 	//objectList.push_back(particles);
@@ -190,7 +195,7 @@ void Game::RenderFrame()
   	for (auto& object : objectList) {
 		object->Draw();
 	}
-
+	//mGraphics.BeginAlpha();
 	particles->Draw();
 
 	mGraphics.EndFrame();

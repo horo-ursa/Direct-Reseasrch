@@ -52,7 +52,7 @@ VertexOut VS(VertexIn vIn) {
 }
 
 //--------------------------Hull Shader
-#define MAX_POINTS 32
+#define MAX_POINTS 3
 // Patch Constant Function
 HS_CONSTANT_DATA_OUTPUT CalcHSPatchConstants(
     InputPatch<VertexOut, MAX_POINTS> ip,
