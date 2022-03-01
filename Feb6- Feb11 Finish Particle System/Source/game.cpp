@@ -124,14 +124,14 @@ void Game::Init(HWND hWnd, float width, float height)
 	gsShader = new GeometryShader();
 	gsShader->Load(L"Shaders/Particle.hlsl", GeometryShaderDesc, ARRAY_SIZE(GeometryShaderDesc));
 
-	Texture* mTex = new Texture();
+	mTex = new Texture();
 	mTex->Load(L"Assets/Textures/Cloud.png");
 
-	Material* mMaterial = new Material();
+	mMaterial = new Material();
 	mMaterial->SetShader(gsShader);
 	mMaterial->SetTexture(Graphics::TEXTURE_SLOT_GSSHADER, mTex);
 
-	ParticleVertex vert[] =
+	GeometryShaderInput vert[] =
 	{
 		{ Vector3(100.0f, 100.f, 150.0f)},
 		{ Vector3(300.f, -200.f, 80.f)},
@@ -145,11 +145,10 @@ void Game::Init(HWND hWnd, float width, float height)
 		{ Vector3(15.f, -54.5f, 250.0f)},
 		{ Vector3(672.f, -670.5f, 650.0f)}
 	};
-	VertexBuffer* vBuffer = new VertexBuffer(vert, sizeof(vert) / sizeof(vert[0]), sizeof(ParticleVertex), nullptr, NULL, NULL);
-	
+	VertexBuffer* vBuffer = new VertexBuffer(vert, sizeof(vert) / sizeof(vert[0]), sizeof(GeometryShaderInput), nullptr, NULL, NULL);
 	mMesh = new Mesh(vBuffer, mMaterial);
 	particles = new RenderObj(mMesh);
-	//objectList.push_back(particles);
+	objectList.push_back(particles);
 }
 
 void Game::Shutdown()
@@ -161,7 +160,11 @@ void Game::Shutdown()
 	}
 	lightingBuffer->Release();
 
-	
+	delete inputhandler;
+	delete gsShader;
+	delete mTex;
+	delete mMesh;
+	delete mMaterial;
 	assetManager->Clear();
 	mGraphics.CleanD3D();
 }
@@ -195,8 +198,6 @@ void Game::RenderFrame()
   	for (auto& object : objectList) {
 		object->Draw();
 	}
-	//mGraphics.BeginAlpha();
-	particles->Draw();
 
 	mGraphics.EndFrame();
 }
