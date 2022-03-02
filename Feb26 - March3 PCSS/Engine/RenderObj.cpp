@@ -18,21 +18,6 @@ RenderObj::RenderObj(){
 	match.c_modelToWorld = Matrix4::CreateRotationZ(Math::ToRadians(45.0f));
 }
 
-/*
-RenderObj::RenderObj(const VertexBuffer* vertexBuffer, Material* material) : vBuffer(vertexBuffer), mMaterial(material){
-	graphic = Graphics::Get();
-	objectBuffer = graphic->CreateGraphicsBuffer(
-		&match, 
-		sizeof(match), 
-		D3D11_BIND_CONSTANT_BUFFER, 
-		D3D11_CPU_ACCESS_WRITE, 
-		D3D11_USAGE_DYNAMIC
-	);
-
-	match.c_modelToWorld = Matrix4::CreateRotationZ(Math::ToRadians(45.0f));
-}
-*/
-
 RenderObj::RenderObj(const Mesh* mesh) : mMesh(mesh)
 {
 	graphic = Graphics::Get();
@@ -43,8 +28,6 @@ RenderObj::RenderObj(const Mesh* mesh) : mMesh(mesh)
 		D3D11_CPU_ACCESS_WRITE,
 		D3D11_USAGE_DYNAMIC
 	);
-
-	//match.c_modelToWorld = Matrix4::CreateRotationZ(Math::ToRadians(45.0f));
 	match.c_modelToWorld = Matrix4::Identity;
 }
 
@@ -58,8 +41,6 @@ void RenderObj::Draw() {
 	size_t size = sizeof(match.c_modelToWorld);
 	graphic->UploadBuffer(objectBuffer, data, size);
 	graphic->GetDeviceContext()->VSSetConstantBuffers(Graphics::ConstantBuffer::CONSTANT_BUFFER_RENDEROBJ, 1, &objectBuffer);
-	//mMaterial->SetActive();
-	//vBuffer->Draw();
 	mMesh->Draw();
 }
 

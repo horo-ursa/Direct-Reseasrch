@@ -29,8 +29,10 @@ public:
 	void OnKeyUp(uint32_t key);
 	bool IsKeyHeld(uint32_t key) const;
 
+	//allocate point light
 	Lights::PointLightData* AllocateLight();
 	void FreeLight(Lights::PointLightData* pLight);
+	//allocate directional light
 	void SetAmbientLight(const Vector3& color);
 	const Vector3& GetAmbientLight() const;
 	void GetMousePos(uint32_t xPos, uint32_t yPos);
@@ -43,16 +45,16 @@ private:
 
 	bool LoadLevel(const WCHAR* fileName);
 	
+	//lighting stuff
 	ID3D11Buffer* lightingBuffer;
 	Lights::LightingConstants lightConst;
+	//ID3D11Buffer* direcLightBuffer;
+	//Lights::DirectionalLightConstants direcLightConst;
+
+
 	std::vector<RenderObj*> objectList;
 	InputHandler* inputhandler;
 
-	RenderObj* particles;
-	Material* mMaterial;
-	Texture* mTex;
-	GeometryShader* gsShader;
-	Mesh* mMesh;
 
 	//mouse input
 	bool firstMouse = true;

@@ -106,10 +106,21 @@ void Game::Init(HWND hWnd, float width, float height)
 	LoadLevel(L"Assets/Levels/Level08.itplevel");
 
 	//set up lighting buffer
-	lightingBuffer = mGraphics.CreateGraphicsBuffer(&lightConst, 
-		sizeof(Lights::LightingConstants),D3D11_BIND_CONSTANT_BUFFER, 
-		D3D11_CPU_ACCESS_WRITE, D3D11_USAGE_DYNAMIC
+	lightingBuffer = mGraphics.CreateGraphicsBuffer(
+		&lightConst, 
+		sizeof(Lights::LightingConstants),
+		D3D11_BIND_CONSTANT_BUFFER, 
+		D3D11_CPU_ACCESS_WRITE, 
+		D3D11_USAGE_DYNAMIC
 	);
+
+	//direcLightBuffer = mGraphics.CreateGraphicsBuffer(
+	//	&direcLightConst, 
+	//	sizeof(Lights::DirectionalLightConstants), 
+	//	D3D11_BIND_CONSTANT_BUFFER, 
+	//	D3D11_CPU_ACCESS_WRITE, 
+	//	D3D11_USAGE_DYNAMIC
+	//);
 
 	assetManager->LoadSkeleton(L"Assets/Anims/SK_Mannequin.itpskel");
 	assetManager->LoadAnimation(L"Assets/Anims/ThirdPersonRun.itpanim2");
@@ -125,6 +136,7 @@ void Game::Shutdown()
 		delete object;
 	}
 	lightingBuffer->Release();
+	//direcLightBuffer->Release();
 
 	delete inputhandler;
 	assetManager->Clear();
@@ -153,8 +165,13 @@ void Game::RenderFrame()
 	//set up camera
 	camera->SetActive();
 
+	//upload light buffer
+	//pointlight
 	mGraphics.UploadBuffer(lightingBuffer, &lightConst, sizeof(Lights::LightingConstants));
 	mGraphics.GetDeviceContext()->PSSetConstantBuffers(mGraphics.CONSTANT_BUFFER_LIGHTING, 1, &lightingBuffer);
+	//directionallight
+	//mGraphics.UploadBuffer(direcLightBuffer, &direcLightConst, sizeof(Lights::DirectionalLightConstants));
+	//mGraphics.GetDeviceContext()->PSSetConstantBuffers(mGraphics.CONSTANT_BUFFER_DIRECTLIGHTING, 1, &direcLightBuffer);
 
 	//draw objects
   	for (auto& object : objectList) {
@@ -238,10 +255,7 @@ bool Game::LoadLevel(const WCHAR* fileName)
 	GetVectorFromJSON(cameraData, "position", cameraPos);
 	Quaternion cameraRot;
 	GetQuaternionFromJSON(cameraData, "rotation", cameraRot);
-	//Camera* cam = new Camera();
-	//cam->SetPositionAndRotation(cameraPos, cameraRot);
 	camera = new Camera();
-	//camera->SetPositionAndRotation(cameraPos, cameraRot);
 
 	//load lighting data
 	const rapidjson::Value& light = doc["lightingData"];

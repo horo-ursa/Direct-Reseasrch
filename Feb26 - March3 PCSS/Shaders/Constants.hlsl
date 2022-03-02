@@ -39,7 +39,8 @@ struct PointLightData
     float outerRadius;
     bool isEnabled;
 };
-cbuffer LightingConstants : register(b3)
+
+cbuffer PointLightConstants : register(b3)
 {
     float3 c_ambient;
     PointLightData c_pointLight[MAX_POINT_LIGHTS];
