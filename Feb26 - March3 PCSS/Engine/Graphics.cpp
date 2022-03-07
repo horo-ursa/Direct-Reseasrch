@@ -16,8 +16,8 @@ Graphics::Graphics()
     , mDevCon(nullptr)
     , mBackBuffer(nullptr)
     , mCurrentRenderTarget(nullptr)
-    , mDepthState(nullptr)
-    , mDepthAlphaState(nullptr)
+    //, mDepthState(nullptr)
+    //, mDepthAlphaState(nullptr)
 {
     DbgAssert(nullptr == s_theGraphics, "You can only have 1 Graphics");
     s_theGraphics = this;
@@ -90,11 +90,12 @@ void Graphics::InitD3D(HWND hWnd, float width, float height)
     mDevCon->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
     //setup state and create depthstencil
+    //create resource and and DSV 
+    CreateDepthStencil(width, height, &depthStencilResource, &mDepthView);
+    //create the depth stencil state
     state = CreateDepthStencilState(D3D11_COMPARISON_LESS);
+    //bind the depth-stencil state to Output Merge stage
     mDevCon->OMSetDepthStencilState(state, 0);
-    CreateDepthStencil(width, height, &texture, &mDepthView);
-    mDepthState = CreateDepthStencilState(true, D3D11_COMPARISON_LESS_EQUAL);
-    mDepthAlphaState = CreateDepthStencilState(true, D3D11_COMPARISON_LESS_EQUAL, false);
     
     //setup SamplerState
     D3D11_SAMPLER_DESC sampDesc;
@@ -107,7 +108,6 @@ void Graphics::InitD3D(HWND hWnd, float width, float height)
     sampDesc.MinLOD = 0;
     sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
     mDev->CreateSamplerState(&sampDesc, &SamplerState);
-
     
     //setup RasterizerState
     ID3D11RasterizerState* RasterizerState;
@@ -146,9 +146,9 @@ void Graphics::CleanD3D()
     mBackBuffer->Release();
 
     state->Release();
-    texture->Release();
-    mDepthState->Release();
-    mDepthAlphaState->Release();
+    depthStencilResource->Release();
+    //mDepthState->Release();
+    //mDepthAlphaState->Release();
     mDepthView->Release();
     SamplerState->Release();
 
@@ -271,26 +271,28 @@ ID3D11DepthStencilState* Graphics::CreateDepthStencilState(D3D11_COMPARISON_FUNC
 bool Graphics::CreateDepthStencil(int inWidth, int inHeight,
     ID3D11Texture2D** pDepthTexture, ID3D11DepthStencilView** pDepthView)
 {
-
+    //create a depth-stencil resource
     D3D11_TEXTURE2D_DESC descDepth;
     ZeroMemory(&descDepth, sizeof(D3D11_TEXTURE2D_DESC));
     descDepth.Width = inWidth;
     descDepth.Height = inHeight;
     descDepth.MipLevels = 1;
     descDepth.ArraySize = 1;
-    descDepth.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+    //descDepth.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+    descDepth.Format = DXGI_FORMAT_R32_TYPELESS;
     descDepth.SampleDesc.Count = 1;
     descDepth.SampleDesc.Quality = 0;
     descDepth.Usage = D3D11_USAGE_DEFAULT;
-    descDepth.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+    //descDepth.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+    descDepth.BindFlags = D3D10_BIND_DEPTH_STENCIL | D3D10_BIND_SHADER_RESOURCE;
     descDepth.CPUAccessFlags = 0;
     descDepth.MiscFlags = 0;
-    //not sure for these NULLs
     mDev->CreateTexture2D(&descDepth, NULL, pDepthTexture);
 
     D3D11_DEPTH_STENCIL_VIEW_DESC descDSV;
     ZeroMemory(&descDSV, sizeof(D3D11_DEPTH_STENCIL_VIEW_DESC));
-    descDSV.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+    //descDSV.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+    descDSV.Format = DXGI_FORMAT_D32_FLOAT;
     descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
     descDSV.Texture2D.MipSlice = 0;
     mDev->CreateDepthStencilView(*pDepthTexture, &descDSV, pDepthView);
@@ -305,7 +307,6 @@ void Graphics::ClearDepthBuffer(ID3D11DepthStencilView* depthView, float depth)
 
 void Graphics::SetActiveTexture(int slot, ID3D11ShaderResourceView* pView)
 {
-    //assume 1 for NumViews
     mDevCon->PSSetShaderResources(slot, 1, &pView);
 }
 

@@ -2,11 +2,8 @@
 #include "engineMath.h"
 struct PerCameraConstants 
 {
-    Matrix4 c_viewProj;
-    Vector4 Right;
-    Vector4 Up;
-    Matrix4 c_view;
-    Matrix4 c_proj;
+    Matrix4 c_lightSpaceViewProj;
+    Matrix4 c_cameraSpaceViewProj;
     Vector3 c_cameraPosition;
     float padding3 = 0.0f;
 };
@@ -23,6 +20,8 @@ public:
     void MoveRight();
     void ProcessMouseMovement(float xoffset, float yoffset);
     void SetPositionAndRotation(Vector3 pos, Quaternion rot);
+    void TransformToLightSpace();
+    void TransformToCameraSpace();
     Matrix4 worldToCameraMatrix;
 protected:
     PerCameraConstants pcc;
@@ -33,7 +32,7 @@ protected:
 
     // Default camera values
     const float YAW = 0.0f;
-    const float PITCH = 0.0F;
+    const float PITCH = -30.0f;
     const float SPEED = 2.5f;
     const float SENSITIVITY = 0.1f;
     const float ZOOM = 45.0f;

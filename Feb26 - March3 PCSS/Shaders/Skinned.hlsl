@@ -15,6 +15,7 @@ struct VOut
     float4 normal : NORMAL0;
     float2 uv : TEXCOORD0;
     float4 worldPosition : POSITION1;
+    float4 psPosLightSpace : POSITION2;
 };
 
 VOut VS(VIn vIn)
@@ -30,7 +31,13 @@ VOut VS(VIn vIn)
     output.position = mul(float4(vIn.position, 1.0), transformMatric);
     output.position = mul(output.position, c_modelToWorld);
     output.worldPosition = output.position;
-    output.position = mul(output.position, c_viewProj);
+    output.psPosLightSpace = mul(output.position, c_lightSpaceViewProj);
+    if (isDepth) {
+        output.position = output.psPosLightSpace;
+    }
+    else {
+        output.position = mul(output.position, c_cameraSpaceViewProj);
+    }
     output.uv = vIn.uv;
     //output.worldPosition = mul(float4(vIn.position, 1.0), c_modelToWorld);
 
@@ -44,6 +51,10 @@ VOut VS(VIn vIn)
 
 float4 PS(VOut pIn) : SV_TARGET
 {
+    if (isDepth) {
+        float depth = pIn.psPosLightSpace.z / pIn.position.w;
+        return float4(depth, depth, depth, 1.0);
+    }
     float4 diffuse = DiffuseTexture.Sample(DefaultSampler, pIn.uv);
     float4 color = diffuse;
     float4 reNormal = normalize(pIn.normal);
@@ -56,17 +67,21 @@ float4 PS(VOut pIn) : SV_TARGET
             float4 Ri = normalize(reflect(-Li, reNormal));
             float4 V = normalize(float4(c_cameraPosition, 1.0) - pIn.worldPosition);
             float Distance = distance(float4(c_pointLight[i].position, 1.0), pIn.worldPosition);
-            float4 Falloff = smoothstep(c_pointLight[i].outerRadius, c_pointLight[i].innerRadius, Distance);
+            //float4 Falloff = smoothstep(c_pointLight[i].outerRadius, c_pointLight[i].innerRadius, Distance);
 
             //float4(c_pointLight[i].lightColor, 1.0)
-            float4 diffuseColor = Falloff * float4(c_diffuseColor, 1.0) * max(dot(reNormal, Li), 0.0);
-            float4 specularColor = Falloff * float4(c_specularColor, 1.0) * max(pow(dot(Ri, V), c_specularPower), 0.0);
+            float4 diffuseColor = /*Falloff */ float4(c_diffuseColor, 1.0) * max(dot(reNormal, Li), 0.0);
+            float4 specularColor = /*Falloff */ float4(c_specularColor, 1.0) * max(pow(dot(Ri, V), c_specularPower), 0.0);
             float4 lightColor = float4(c_pointLight[i].lightColor, 1.0) * (diffuseColor + specularColor);
             accumulatedColor = accumulatedColor + lightColor;
             //color += lightColor;
         }
     }
-    accumulatedColor += float4(c_ambient, 1.0);
+
+    float shadow = ShadowCalculation(pIn.psPosLightSpace);
+    shadow = PCSS(pIn.psPosLightSpace);
+    accumulatedColor = shadow * accumulatedColor + float4(c_ambient, 1.0);
     color = color * accumulatedColor;
+
     return color;
 }

@@ -13,6 +13,7 @@ public:
     int GetWidth() const { return mWidth; }
     int GetHeight() const { return mHeight; }
     void SetActive(int slot) const;
+    ID3D11RenderTargetView* CreateRenderTarget(int inWidth, int inHeight, DXGI_FORMAT format);
 
 private:
     ID3D11Resource *mResource;

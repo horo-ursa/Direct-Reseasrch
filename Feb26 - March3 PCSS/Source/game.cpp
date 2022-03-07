@@ -114,18 +114,29 @@ void Game::Init(HWND hWnd, float width, float height)
 		D3D11_USAGE_DYNAMIC
 	);
 
-	//direcLightBuffer = mGraphics.CreateGraphicsBuffer(
-	//	&direcLightConst, 
-	//	sizeof(Lights::DirectionalLightConstants), 
-	//	D3D11_BIND_CONSTANT_BUFFER, 
-	//	D3D11_CPU_ACCESS_WRITE, 
-	//	D3D11_USAGE_DYNAMIC
-	//);
+	maskBuffer = mGraphics.CreateGraphicsBuffer(
+		&mask,
+		sizeof(depthMask),
+		D3D11_BIND_CONSTANT_BUFFER,
+		D3D11_CPU_ACCESS_WRITE,
+		D3D11_USAGE_DYNAMIC
+	);
 
 	assetManager->LoadSkeleton(L"Assets/Anims/SK_Mannequin.itpskel");
 	assetManager->LoadAnimation(L"Assets/Anims/ThirdPersonRun.itpanim2");
 
 	inputhandler = new InputHandler(this);
+
+	depthTexture = new Texture();
+	depthTarget = depthTexture->CreateRenderTarget(
+		mGraphics.GetScreenWidth(),
+		mGraphics.GetScreenHeight(),
+		DXGI_FORMAT_R32_FLOAT
+	);
+
+	//for second pass
+	mGraphics.CreateDepthStencil(mGraphics.GetScreenWidth(), mGraphics.GetScreenHeight(), &mDepthTexture, &mDSV);
+	DSS = mGraphics.CreateDepthStencilState(D3D11_COMPARISON_LESS);
 }
 
 void Game::Shutdown()
@@ -140,43 +151,76 @@ void Game::Shutdown()
 
 	delete inputhandler;
 	assetManager->Clear();
+
+	delete depthTexture;
+	depthTarget->Release();
+
+	maskBuffer->Release();
+
+	mDSV->Release();
+	mDepthTexture->Release();
+	DSS->Release();
+
 	mGraphics.CleanD3D();
 }
 
 void Game::Update(float deltaTime)
 {
 	for (auto& obj : objectList) {
-		obj->Update(deltaTime);
+		obj->Update(0.0f);
 	}
 	inputhandler->Execute();
 }
 
 void Game::RenderFrame()
 {
+	/*Pass 1, the depth buffer contains the depth values for the scene*/
 	// Set the render target
-	mGraphics.SetRenderTarget(mGraphics.GetBackBuffer(), mGraphics.GetView());
-
-	{	// Clear the screen to blue
-		Graphics::Color4 clearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	mGraphics.SetRenderTarget(depthTarget, mGraphics.GetView());
+	//mGraphics.SetRenderTarget(mGraphics.GetBackBuffer(), mGraphics.GetView());
+	{
+		Graphics::Color4 clearColor(1.0f, 1.0f, 1.0f, 1.0f);
 		mGraphics.ClearRenderTarget(clearColor);
 		mGraphics.ClearDepthBuffer(mGraphics.GetView(), 1.0f);
 	}
 
 	//set up camera
 	camera->SetActive();
+	//camera->TransformToLightSpace();
 
 	//upload light buffer
-	//pointlight
 	mGraphics.UploadBuffer(lightingBuffer, &lightConst, sizeof(Lights::LightingConstants));
 	mGraphics.GetDeviceContext()->PSSetConstantBuffers(mGraphics.CONSTANT_BUFFER_LIGHTING, 1, &lightingBuffer);
-	//directionallight
-	//mGraphics.UploadBuffer(direcLightBuffer, &direcLightConst, sizeof(Lights::DirectionalLightConstants));
-	//mGraphics.GetDeviceContext()->PSSetConstantBuffers(mGraphics.CONSTANT_BUFFER_DIRECTLIGHTING, 1, &direcLightBuffer);
+	//upload depthmask buffer
+	mask.isDepth = true;
+	mGraphics.UploadBuffer(maskBuffer, &mask, sizeof(depthMask));
+	mGraphics.GetDeviceContext()->VSSetConstantBuffers(mGraphics.CONSTANT_BUFFER_DEPTHMASK, 1, &maskBuffer);
+	mGraphics.GetDeviceContext()->PSSetConstantBuffers(mGraphics.CONSTANT_BUFFER_DEPTHMASK, 1, &maskBuffer);
 
 	//draw objects
   	for (auto& object : objectList) {
 		object->Draw();
 	}
+
+	/*Pass 2*/
+	mGraphics.GetDeviceContext()->OMSetDepthStencilState(DSS, 0);
+	mGraphics.SetRenderTarget(mGraphics.GetBackBuffer(), mDSV);
+	{
+		Graphics::Color4 clearColor(0.5f, 0.5f, 0.5f, 1.0f);
+		mGraphics.ClearRenderTarget(clearColor);
+		mGraphics.ClearDepthBuffer(mDSV, 1.0f);
+	}
+
+	mask.isDepth = false;
+	mGraphics.UploadBuffer(maskBuffer, &mask, sizeof(depthMask));
+	mGraphics.GetDeviceContext()->VSSetConstantBuffers(mGraphics.CONSTANT_BUFFER_DEPTHMASK, 1, &maskBuffer);
+	mGraphics.GetDeviceContext()->PSSetConstantBuffers(mGraphics.CONSTANT_BUFFER_DEPTHMASK, 1, &maskBuffer);
+	depthTexture->SetActive(mGraphics.TEXTURE_SLOT_DEPTHMAP);
+	for (auto& object : objectList) {
+		object->Draw();
+	}
+	mGraphics.SetActiveTexture(mGraphics.TEXTURE_SLOT_DEPTHMAP, nullptr);
+
 
 	mGraphics.EndFrame();
 }

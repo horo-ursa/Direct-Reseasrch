@@ -59,4 +59,21 @@ private:
 	//mouse input
 	bool firstMouse = true;
 	float lastX; float lastY;
+
+	//
+	struct depthMask
+	{
+		bool isDepth;
+		Vector3 pad;
+	};
+	depthMask mask;
+	ID3D11Buffer* maskBuffer;
+
+	Texture* depthTexture;
+	ID3D11RenderTargetView* depthTarget;
+
+	//for second pass depthstencilview
+	ID3D11DepthStencilView* mDSV;
+	ID3D11Texture2D* mDepthTexture;
+	ID3D11DepthStencilState* DSS;
 };

@@ -3,8 +3,8 @@
 #include "Game.h"
 #include "windowsx.h"
 
-#define WINDOW_WIDTH    2000
-#define WINDOW_HEIGHT   1200
+#define WINDOW_WIDTH    800
+#define WINDOW_HEIGHT   600
 #define MAX_LOADSTRING  100
 
 // Global Variables:
@@ -177,7 +177,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
     rect.bottom = lr.y;
 
     //ClipCursor(&rect);
-    ShowCursor(false);
+    ShowCursor(TRUE);
     SetCursorPos((rect.left + rect.right) / 2, (rect.top + rect.bottom) / 2);
 
     game.Init(hWnd, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT);

@@ -8,7 +8,7 @@ public:
     enum TextureSlot
     {
         TEXTURE_SLOT_DIFFUSE,
-        TEXTURE_SLOT_GSSHADER,
+        TEXTURE_SLOT_DEPTHMAP,
 		TEXTURE_SLOT_TOTAL
     };
 
@@ -18,7 +18,8 @@ public:
 		CONSTANT_BUFFER_RENDEROBJ,
         CONSTANT_BUFFER_MATERIAL,
         CONSTANT_BUFFER_LIGHTING,
-        CONSTANT_BUFFER_Skin
+        CONSTANT_BUFFER_Skin,
+        CONSTANT_BUFFER_DEPTHMASK
 	};
 
     class Color4
@@ -69,6 +70,8 @@ public:
     void SetBlendState(ID3D11BlendState* inBlendState);
     void BeginAlpha();
 
+    ID3D11Texture2D* depthStencilResource;
+    ID3D11DepthStencilState* state;
 private:
     static Graphics* s_theGraphics;
     float mScreenWidth;
@@ -81,9 +84,7 @@ private:
     ID3D11RenderTargetView* mBackBuffer;
     ID3D11RenderTargetView* mCurrentRenderTarget;
 
-    ID3D11DepthStencilState* state;
 
-    ID3D11Texture2D* texture;
     ID3D11SamplerState* SamplerState;
 
     ID3D11DepthStencilView* mDepthView;
