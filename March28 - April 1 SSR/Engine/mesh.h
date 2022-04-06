@@ -1,0 +1,28 @@
+#pragma once
+
+#include "engineMath.h"
+#include "Graphics.h"
+
+class AssetManager;
+class Material;
+class VertexBuffer;
+class Shader;
+
+class Mesh
+{
+public:
+	Mesh(const VertexBuffer* vertexBuffer, Material* material);
+	~Mesh();
+
+	void Draw() const;
+	void Draw(Shader* shader) const;
+
+	bool Load(const WCHAR* fileName, AssetManager* pAssetManager);
+	static Mesh* StaticLoad(const WCHAR* fileName, AssetManager* pAssetManager);
+	bool IsSkinned() const;
+
+protected:
+	Material* mMaterial;
+	const VertexBuffer* mVertexBuffer;
+	bool mIsSkinned;
+};
