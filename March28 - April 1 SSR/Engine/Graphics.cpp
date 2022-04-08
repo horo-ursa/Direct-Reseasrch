@@ -315,7 +315,6 @@ void Graphics::SetActiveTexture(int slot, ID3D11ShaderResourceView* pView)
 
 void Graphics::SetActiveSampler(int slot, ID3D11SamplerState* pSampler)
 {
-    //assume 1 again
     mDevCon->PSSetSamplers(slot, 1, &pSampler);
 }
 

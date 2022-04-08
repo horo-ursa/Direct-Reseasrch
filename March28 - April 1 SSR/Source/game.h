@@ -76,8 +76,8 @@ private:
 	shaderMask mask;
 	ID3D11Buffer* maskBuffer;
 
-	Texture* depthTexture;
-	ID3D11RenderTargetView* depthTarget;
+	Texture* Pass1depthTexture;
+	ID3D11RenderTargetView* Pass1depthTarget;
 
 	//for second pass depthstencilview
 	ID3D11DepthStencilView* mDSV;
@@ -89,12 +89,16 @@ private:
 	ID3D11RenderTargetView* positionTarget;
 	ID3D11RenderTargetView* albedoSpecTarget;
 	ID3D11RenderTargetView* normalTarget;
+	ID3D11RenderTargetView* GPdepthTarget;
+	ID3D11RenderTargetView* shadowTarget;
 	Texture* positionTexture;
 	Texture* albedoSpecTexture;
 	Texture* normalTexture;
+	Texture* GPdepthTexture;
+	Texture* shadowTexture;
 	ID3D11Device* device;
 	ID3D11DeviceContext* devContext;
-	ID3D11RenderTargetView* RTVArray[3];
+	ID3D11RenderTargetView* RTVArray[5];
 
 
 };

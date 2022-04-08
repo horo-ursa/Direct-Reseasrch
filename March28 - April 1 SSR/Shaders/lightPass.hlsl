@@ -23,11 +23,10 @@ VertexToPixel VS(in VertexInput input) {
 
 float4 PS(in VertexToPixel input) : SV_Target
 {
-    float2 uv = input.position.xy;
     float3 sampleIndices = float3(input.position.xy, 0);
     float4 pixelWorldPosition = float4(positionGP.Load(sampleIndices).xyz, 1.0);
     float4 albedo = float4(albedoGP.Load(sampleIndices).xyz, 1.0);
-    float4 normal = float4(normalize(normalGP.Load(sampleIndices).xyz), 1.0);
+    float4 normal = float4(normalize(normalGP.Load(sampleIndices).xyz), 0.0);
 
     //pixelWorldPosition = positionGP.Sample(DefaultSampler, uv);
     //albedo = albedoGP.Sample(DefaultSampler, uv);
@@ -37,7 +36,6 @@ float4 PS(in VertexToPixel input) : SV_Target
     for (int i = 0; i < MAX_POINT_LIGHTS; i++) {
         if (c_pointLight[i].isEnabled) {
             float4 viewDir = normalize(float4(c_cameraPosition, 1.0) - pixelWorldPosition);
-            //float4 viewDir = normalize(float4(c_cameraPosition, 1.0) - input.worldPos);
             float4 lightDir = normalize(float4(c_pointLight[i].position, 1.0));
             float4 reflectedLightDir = normalize(reflect(-lightDir, normal));
             float4 diffuseColor = float4(c_diffuseColor, 1.0) * max(dot(normal, lightDir), 0.0);

@@ -125,17 +125,22 @@ void Game::Init(HWND hWnd, float width, float height)
 
 		//GPassPhong
 		Shader* GPPShader = new Shader();
-		gpShader->Load(L"Shaders/GPassPhong.hlsl", inputForDefferedRenderring, ARRAY_SIZE(inputForDefferedRenderring));
+		GPPShader->Load(L"Shaders/GPassPhong.hlsl", inputForDefferedRenderring, ARRAY_SIZE(inputForDefferedRenderring));
 		assetManager->SetShader(L"GPassPhong", GPPShader);
 
 		//GPassSkin
-		Shader* GPSShader = new Shader();
-		SkinShader->Load(L"Shaders/GPassSkin.hlsl", SkinningDataDesc, ARRAY_SIZE(SkinningDataDesc));
-		assetManager->SetShader(L"GPassSkin", GPSShader);
+		Shader* GPassSkin = new Shader();
+		GPassSkin->Load(L"Shaders/GPassSkin.hlsl", SkinningDataDesc, ARRAY_SIZE(SkinningDataDesc));
+		assetManager->SetShader(L"GPassSkin", GPassSkin);
 
+		//DepthPass shader
+		Shader* DPShader = new Shader();
+		DPShader->Load(L"Shaders/DepthPass.hlsl", inputForDefferedRenderring, ARRAY_SIZE(inputForDefferedRenderring));
+		assetManager->SetShader(L"DepthPass", DPShader);
 		//SSR
+
 		Shader* SSRShader = new Shader();
-		SkinShader->Load(L"Shaders/SSR.hlsl", inputForDefferedRenderring, ARRAY_SIZE(inputForDefferedRenderring));
+		SSRShader->Load(L"Shaders/SSR.hlsl", inputForDefferedRenderring, ARRAY_SIZE(inputForDefferedRenderring));
 		assetManager->SetShader(L"SSR", SSRShader);
 	}
 
@@ -166,8 +171,8 @@ void Game::Init(HWND hWnd, float width, float height)
 
 	inputhandler = new InputHandler(this);
 
-	depthTexture = new Texture();
-	depthTarget = depthTexture->CreateRenderTarget(
+	Pass1depthTexture = new Texture();
+	Pass1depthTarget = Pass1depthTexture->CreateRenderTarget(
 		mGraphics.GetScreenWidth(),
 		mGraphics.GetScreenHeight(),
 		DXGI_FORMAT_R32_FLOAT
@@ -184,9 +189,15 @@ void Game::Init(HWND hWnd, float width, float height)
 	albedoSpecTarget = albedoSpecTexture->CreateRenderTarget(width, height, DXGI_FORMAT_R32G32B32A32_FLOAT);
 	positionTexture = new Texture();
 	positionTarget = positionTexture->CreateRenderTarget(width, height, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	GPdepthTexture = new Texture();
+	GPdepthTarget = GPdepthTexture->CreateRenderTarget(width, height, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	shadowTexture = new Texture();
+	shadowTarget = shadowTexture->CreateRenderTarget(width, height, DXGI_FORMAT_R32G32B32A32_FLOAT);
 	RTVArray[0] = positionTarget;
 	RTVArray[1] = albedoSpecTarget;
 	RTVArray[2] = normalTarget;
+	RTVArray[3] = GPdepthTarget;
+	RTVArray[4] = shadowTarget;
 
 	////obj loader
 	//objl::Loader Loader;
@@ -248,8 +259,6 @@ void Game::Shutdown()
 	delete inputhandler;
 	assetManager->Clear();
 
-	delete depthTexture;
-	depthTarget->Release();
 
 	maskBuffer->Release();
 
@@ -257,12 +266,19 @@ void Game::Shutdown()
 	mDepthTexture->Release();
 	DSS->Release();
 
+	//delete depthTexture;
+	//depthTarget->Release();
+
 	delete positionTexture;
 	positionTarget->Release();
 	delete normalTexture;
 	normalTarget->Release();
 	delete albedoSpecTexture;
 	albedoSpecTarget->Release();
+	delete GPdepthTexture;
+	GPdepthTarget->Release();
+	delete shadowTexture;
+	shadowTarget->Release();
 
 	mGraphics.CleanD3D();
 }
@@ -277,36 +293,39 @@ void Game::Update(float deltaTime)
 
 void Game::RenderFrame()
 {
+	bool DEBUG = true;
+
 	camera->SetActive();
 	//upload light buffer
 	mGraphics.UploadBuffer(lightingBuffer, &lightConst, sizeof(Lights::LightingConstants));
 	mGraphics.GetDeviceContext()->PSSetConstantBuffers(mGraphics.CONSTANT_BUFFER_LIGHTING, 1, &lightingBuffer);
 
-	//Pass 1: G-Buffer pass
-	//mask.isDepth = false;
-	//mask.isGBufferPass = true;
-	//mask.isLightPass = false;
-	//mGraphics.UploadBuffer(maskBuffer, &mask, sizeof(shaderMask));
-	//mGraphics.GetDeviceContext()->VSSetConstantBuffers(mGraphics.CONSTANT_BUFFER_DEPTHMASK, 1, &maskBuffer);
-	//mGraphics.GetDeviceContext()->PSSetConstantBuffers(mGraphics.CONSTANT_BUFFER_DEPTHMASK, 1, &maskBuffer);
-
+	//Pass 1: DepthMap pass, create the depth texture from light                                  CHECKED
+	mGraphics.ClearDepthBuffer(mDSV, 1.0);
+	mGraphics.SetRenderTarget(Pass1depthTarget, mDSV);
+	mGraphics.ClearRenderTarget(Graphics::Color4(1.0f, 1.0f, 1.0f, 1.0f));
+	for (auto& object : objectList) {
+		object->Draw(assetManager->GetShader(L"DepthPass"));
+	}
+	devContext->OMSetRenderTargets(0, nullptr, nullptr);
+	//Pass 2: G-Buffer pass, create position/normal/albedo/shadow/depth texture
+	Pass1depthTexture->SetActive(Graphics::TEXTURE_SLOT_DEPTHMAP);
 	mGraphics.ClearDepthBuffer(mGraphics.GetDepthView(), 1.0f);
-	devContext->OMSetRenderTargets(3, RTVArray, mGraphics.GetDepthView());
-	for (int i = 0; i < 3; i++) {
+	devContext->OMSetRenderTargets(5, RTVArray, mGraphics.GetDepthView());
+	for (int i = 0; i < 5; i++) {
 		mGraphics.ClearRenderTarget(RTVArray[i], Graphics::Color4(0.0f, 0.0f, 0.0f, 1.0f));
 	}
-	for (auto& object : objectList) {
-		object->Draw(assetManager->GetShader(L"GPass"));
-	}
+	//mGraphics.SetRenderTarget(mGraphics.GetBackBuffer(), mGraphics.GetDepthView());
+	//mGraphics.ClearRenderTarget(Graphics::Color4(0.0f, 0.0f, 0.0f, 1.0f));
 
-	//Pass 2: lighting pass
-	//mask.isDepth = false;
-	//mask.isGBufferPass = false;
-	//mask.isLightPass = true;
-	//mGraphics.UploadBuffer(maskBuffer, &mask, sizeof(shaderMask));
-	//mGraphics.GetDeviceContext()->VSSetConstantBuffers(mGraphics.CONSTANT_BUFFER_DEPTHMASK, 1, &maskBuffer);
-	//mGraphics.GetDeviceContext()->PSSetConstantBuffers(mGraphics.CONSTANT_BUFFER_DEPTHMASK, 1, &maskBuffer);
+	objectList[0]->Draw(assetManager->GetShader(L"GPass"));		//light sphere
+	objectList[1]->Draw(assetManager->GetShader(L"GPass"));		//platform
+	objectList[2]->Draw(assetManager->GetShader(L"GPassSkin"));	//robot
 
+	mGraphics.SetActiveTexture(Graphics::TEXTURE_SLOT_DEPTHMAP, nullptr);
+	devContext->OMSetRenderTargets(0, nullptr, nullptr);
+
+	//Pass 3: Lighting pass, do SSR here
 	mGraphics.ClearDepthBuffer(mGraphics.GetDepthView(), 1.0f);
 	mGraphics.SetRenderTarget(mGraphics.GetBackBuffer(), mGraphics.GetDepthView());
 	mGraphics.ClearRenderTarget(Graphics::Color4(0.5f, 0.5f, 0.5f, 1.0f));
@@ -314,28 +333,34 @@ void Game::RenderFrame()
 	positionTexture->SetActive(Graphics::TEXTURE_SLOT_POSITION);
 	albedoSpecTexture->SetActive(Graphics::TEXTURE_SLOT_ALBEDO);
 	normalTexture->SetActive(Graphics::TEXTURE_SLOT_NORMAL);
+	GPdepthTexture->SetActive(Graphics::TEXTURE_SLOT_GPDEPTH);
+	shadowTexture->SetActive(Graphics::TEXTURE_SLOT_SHADOW);
 
 	objectList[0]->Draw(assetManager->GetShader(L"lightPass"));		//light sphere
-	objectList[1]->Draw(assetManager->GetShader(L"SSR"));			//platform
 	objectList[2]->Draw(assetManager->GetShader(L"lightPass"));		//robot
+	objectList[1]->Draw(assetManager->GetShader(L"SSR"));			//platform
 
-	//for (auto& object : objectList) {
-	//	object->Draw(assetManager->GetShader(L"lightPass"));
-	//}
+	mGraphics.SetActiveTexture(Graphics::TEXTURE_SLOT_POSITION, nullptr);
+	mGraphics.SetActiveTexture(Graphics::TEXTURE_SLOT_ALBEDO, nullptr);
+	mGraphics.SetActiveTexture(Graphics::TEXTURE_SLOT_NORMAL, nullptr);
+	mGraphics.SetActiveTexture(Graphics::TEXTURE_SLOT_GPDEPTH, nullptr);
+	mGraphics.SetActiveTexture(Graphics::TEXTURE_SLOT_SHADOW, nullptr);
+	devContext->OMSetRenderTargets(0, nullptr, nullptr);
+
 	mGraphics.EndFrame();
 
 
 
 
 
-	///*Pass 1, the depth buffer contains the depth values for the scene*/
-	//// Set the render target
-	//mGraphics.SetRenderTarget(depthTarget, mGraphics.GetView());
-	////mGraphics.SetRenderTarget(mGraphics.GetBackBuffer(), mGraphics.GetDepthView());
+	/*Pass 1, the depth buffer contains the depth values for the scene*/
+	// Set the render target
+	//mGraphics.SetRenderTarget(depthTarget, mGraphics.GetDepthView());
+	//mGraphics.SetRenderTarget(mGraphics.GetBackBuffer(), mGraphics.GetDepthView());
 	//{
 	//	Graphics::Color4 clearColor(1.0f, 1.0f, 1.0f, 1.0f);
 	//	mGraphics.ClearRenderTarget(clearColor);
-	//	mGraphics.ClearDepthBuffer(mGraphics.GetView(), 1.0f);
+	//	mGraphics.ClearDepthBuffer(mGraphics.GetDepthView(), 1.0f);
 	//}
 
 	////set up camera
@@ -346,7 +371,7 @@ void Game::RenderFrame()
 	//mGraphics.GetDeviceContext()->PSSetConstantBuffers(mGraphics.CONSTANT_BUFFER_LIGHTING, 1, &lightingBuffer);
 	////upload depthmask buffer
 	//mask.isDepth = true;
-	//mGraphics.UploadBuffer(maskBuffer, &mask, sizeof(depthMask));
+	//mGraphics.UploadBuffer(maskBuffer, &mask, sizeof(shaderMask));
 	//mGraphics.GetDeviceContext()->VSSetConstantBuffers(mGraphics.CONSTANT_BUFFER_DEPTHMASK, 1, &maskBuffer);
 	//mGraphics.GetDeviceContext()->PSSetConstantBuffers(mGraphics.CONSTANT_BUFFER_DEPTHMASK, 1, &maskBuffer);
 
@@ -356,23 +381,23 @@ void Game::RenderFrame()
 	//}
 
 	///*Pass 2*/
-	//mGraphics.GetDeviceContext()->OMSetDepthStencilState(DSS, 0);
-	//mGraphics.SetRenderTarget(mGraphics.GetBackBuffer(), mDSV);
-	//{
-	//	Graphics::Color4 clearColor(0.5f, 0.5f, 0.5f, 1.0f);
-	//	mGraphics.ClearRenderTarget(clearColor);
-	//	mGraphics.ClearDepthBuffer(mDSV, 1.0f);
-	//}
+	////mGraphics.GetDeviceContext()->OMSetDepthStencilState(DSS, 0);
+	////mGraphics.SetRenderTarget(mGraphics.GetBackBuffer(), mDSV);
+	////{
+	////	Graphics::Color4 clearColor(0.5f, 0.5f, 0.5f, 1.0f);
+	////	mGraphics.ClearRenderTarget(clearColor);
+	////	mGraphics.ClearDepthBuffer(mDSV, 1.0f);
+	////}
 
-	//mask.isDepth = false;
-	//mGraphics.UploadBuffer(maskBuffer, &mask, sizeof(depthMask));
-	//mGraphics.GetDeviceContext()->VSSetConstantBuffers(mGraphics.CONSTANT_BUFFER_DEPTHMASK, 1, &maskBuffer);
-	//mGraphics.GetDeviceContext()->PSSetConstantBuffers(mGraphics.CONSTANT_BUFFER_DEPTHMASK, 1, &maskBuffer);
-	//depthTexture->SetActive(mGraphics.TEXTURE_SLOT_DEPTHMAP);
-	//for (auto& object : objectList) {
-	//	object->Draw();
-	//}
-	//mGraphics.SetActiveTexture(mGraphics.TEXTURE_SLOT_DEPTHMAP, nullptr);
+	////mask.isDepth = false;
+	////mGraphics.UploadBuffer(maskBuffer, &mask, sizeof(depthMask));
+	////mGraphics.GetDeviceContext()->VSSetConstantBuffers(mGraphics.CONSTANT_BUFFER_DEPTHMASK, 1, &maskBuffer);
+	////mGraphics.GetDeviceContext()->PSSetConstantBuffers(mGraphics.CONSTANT_BUFFER_DEPTHMASK, 1, &maskBuffer);
+	////depthTexture->SetActive(mGraphics.TEXTURE_SLOT_DEPTHMAP);
+	////for (auto& object : objectList) {
+	////	object->Draw();
+	////}
+	////mGraphics.SetActiveTexture(mGraphics.TEXTURE_SLOT_DEPTHMAP, nullptr);
 	//mGraphics.EndFrame();
 }
 

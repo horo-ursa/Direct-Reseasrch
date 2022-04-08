@@ -33,7 +33,7 @@ VOut VS(VIn vIn)
 
     output.normal = mul(float4(vIn.normal, 0.0), c_modelToWorld);
     output.normal = normalize(output.normal);
-    return output;
+    return output;          
 }
 
 float4 PS(VOut pIn) : SV_TARGET
