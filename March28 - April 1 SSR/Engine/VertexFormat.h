@@ -52,3 +52,8 @@ struct VertexForGBuffer {
     Vector3 normal;
     Vector2 uv;
 };
+
+struct quadVertexBuffer {
+    Vector3 pos;
+    Vector2 uv;
+};

@@ -36,10 +36,12 @@ float4 PS(in VertexToPixel input) : SV_Target
     for (int i = 0; i < MAX_POINT_LIGHTS; i++) {
         if (c_pointLight[i].isEnabled) {
             float4 viewDir = normalize(float4(c_cameraPosition, 1.0) - pixelWorldPosition);
-            float4 lightDir = normalize(float4(c_pointLight[i].position, 1.0));
+            float4 lightDir = normalize(float4(c_pointLight[i].position, 0.0));
             float4 reflectedLightDir = normalize(reflect(-lightDir, normal));
             float4 diffuseColor = float4(c_diffuseColor, 1.0) * max(dot(normal, lightDir), 0.0);
+            //return float4(c_pointLight[i].lightColor, 1.0) * diffuseColor * albedo;
             float4 specularColor = float4(c_specularColor, 1.0) * max(pow(dot(reflectedLightDir, viewDir), c_specularPower), 0.0);
+            //return float4(c_pointLight[i].lightColor, 1.0) * specularColor * albedo;
             float4 lightColor = float4(c_pointLight[i].lightColor, 1.0) * (diffuseColor + specularColor);
             accumulatedColor += lightColor;
         }

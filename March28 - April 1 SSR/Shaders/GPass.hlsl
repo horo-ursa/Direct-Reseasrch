@@ -13,6 +13,7 @@ struct VertexToPixel
     float4 normal          : NORMAL0;
     float2 uv              : TEXCOORD0;
     float4 worldPosition   : POSITION1;
+    float  vDepth          : DEPTH0;
 };
 
 struct GPassOut {
@@ -30,6 +31,7 @@ float SimpleShadowMap(float4 posWorld, float bias) {
     projCoords.y = 1 - projCoords.y;
     float cloestDepth = DepthMap.Sample(DefaultSampler, projCoords.xy).r + bias;
     float currentDepth = projCoords.z;
+    //float currentDepth = posLight.w;
     float inShadow = currentDepth > cloestDepth ? 0.0 : 1.0;
     return inShadow;
 }
@@ -37,30 +39,28 @@ float SimpleShadowMap(float4 posWorld, float bias) {
 VertexToPixel VS(in VertexInput input) {
     VertexToPixel output;
     output.worldPosition = mul(float4(input.position, 1.0), c_modelToWorld);
-    output.worldPosition = output.worldPosition.xyzw / output.worldPosition.w;
     output.position = mul(output.worldPosition, c_cameraSpaceViewProj);
     output.normal = normalize(mul(float4(input.normal, 0.0), c_modelToWorld));
     output.uv = input.uv;
+    output.vDepth = output.position.w;
     return output;
 }
 
 GPassOut PS(in VertexToPixel input)
 {
     GPassOut output;
+    float3 screenSpace = input.position.xyz / input.position.w;
     output.Albedo = float4(DiffuseTexture.Sample(DefaultSampler, input.uv).rgb, 1.0);
     output.Position = float4(input.worldPosition.xyz, 1.0);
-    output.Normal = float4(normalize(input.normal.xyz), 1.0);                   // DIFFERENT HERE
-    float depth = input.position.z;
-    float camtopoint = distance(c_cameraPosition, input.worldPosition.xyz);
-    output.Depth = float4(depth, camtopoint, depth, 1.0);                            // SEEMS WRONG HERE
-    float inshadow = SimpleShadowMap(input.worldPosition, 0.001);
+    output.Normal = float4(normalize(input.normal.xyz), 1.0); // DIFFERENT HERE
+
+    float4 projPos = mul(input.worldPosition, c_cameraSpaceViewProj);
+    float4 scr = projPos.xyzw / projPos.w;
+    output.Depth = float4(input.worldPosition.x, input.vDepth, scr.z, 1.0);
+    
+
+    float inshadow = SimpleShadowMap(input.worldPosition, 0.01);
     output.Shadow = float4(inshadow, inshadow, inshadow, 1.0);
 
     return output;
 }
-
-//float4 PS(in VertexToPixel input) : SV_TARGET
-//{
-//    float depth = input.position.z;
-//    return float4(depth, depth, depth, 1.0);
-//}

@@ -28,6 +28,8 @@ VOut VS(VIn vIn)
 
 float4 PS(VOut pIn) : SV_TARGET
 {
-    float depth = pIn.position.z / pIn.position.w;
+    float4 position = mul(pIn.worldPosition, c_lightSpaceViewProj);
+    float depth = position.z / position.w;
+    //float depth = position.w;
     return float4(depth, depth, depth, 1.0);
 }

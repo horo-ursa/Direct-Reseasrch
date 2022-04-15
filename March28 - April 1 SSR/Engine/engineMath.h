@@ -886,6 +886,14 @@ public:
     {
         float yScale = 1.0f / tanf(fovY / 2.0f);
         float xScale = yScale * height / width;
+        /*float temp[4][4] =
+        {
+            { xScale, 0.0f, 0.0f, 0.0f },
+            { 0.0f, yScale, 0.0f, 0.0f },
+            { 0.0f, 0.0f, farZ / (farZ - nearZ), 1.0f },
+            { 0.0f, 0.0f, -nearZ * farZ / (farZ - nearZ), 0.0f }
+        };*/
+
         float temp[4][4] =
         {
             { xScale, 0.0f, 0.0f, 0.0f },

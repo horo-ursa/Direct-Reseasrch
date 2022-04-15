@@ -16,7 +16,7 @@ RenderObj::RenderObj(){
 		D3D11_USAGE_DYNAMIC
 	);
 
-	match.c_modelToWorld = Matrix4::CreateRotationZ(Math::ToRadians(45.0f));
+	match.c_modelToWorld = Matrix4::Identity;
 }
 
 RenderObj::RenderObj(const Mesh* mesh) : mMesh(mesh)
@@ -42,6 +42,7 @@ void RenderObj::Draw() {
 	size_t size = sizeof(match.c_modelToWorld);
 	graphic->UploadBuffer(objectBuffer, data, size);
 	graphic->GetDeviceContext()->VSSetConstantBuffers(Graphics::ConstantBuffer::CONSTANT_BUFFER_RENDEROBJ, 1, &objectBuffer);
+	graphic->GetDeviceContext()->PSSetConstantBuffers(Graphics::ConstantBuffer::CONSTANT_BUFFER_RENDEROBJ, 1, &objectBuffer);
 	mMesh->Draw();
 }
 
@@ -50,6 +51,7 @@ void RenderObj::Draw(Shader* shader) {
 	size_t size = sizeof(match.c_modelToWorld);
 	graphic->UploadBuffer(objectBuffer, data, size);
 	graphic->GetDeviceContext()->VSSetConstantBuffers(Graphics::ConstantBuffer::CONSTANT_BUFFER_RENDEROBJ, 1, &objectBuffer);
+	graphic->GetDeviceContext()->PSSetConstantBuffers(Graphics::ConstantBuffer::CONSTANT_BUFFER_RENDEROBJ, 1, &objectBuffer);
 	mMesh->Draw(shader);
 }
 

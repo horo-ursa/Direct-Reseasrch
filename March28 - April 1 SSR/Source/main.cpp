@@ -3,8 +3,8 @@
 #include "Game.h"
 #include "windowsx.h"
 
-#define WINDOW_WIDTH    2000
-#define WINDOW_HEIGHT   1000
+#define WINDOW_WIDTH    800
+#define WINDOW_HEIGHT   600
 #define MAX_LOADSTRING  100
 
 // Global Variables:

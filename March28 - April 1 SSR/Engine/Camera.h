@@ -4,6 +4,8 @@ struct PerCameraConstants
 {
     Matrix4 c_lightSpaceViewProj;
     Matrix4 c_cameraSpaceViewProj;
+    Matrix4 c_viewMatrix;
+    Matrix4 c_projMatrix;
     Vector3 c_cameraPosition;
     float padding3 = 0.0f;
 };

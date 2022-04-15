@@ -55,7 +55,7 @@ void Game::Init(HWND hWnd, float width, float height)
 		Shader* meshShader = new Shader();
 		meshShader->Load(L"Shaders/Mesh.hlsl", inputElem, ARRAY_SIZE(inputElem));
 		assetManager->SetShader(L"Mesh", meshShader);
-	
+
 		//BasicMesh.hlsl
 		D3D11_INPUT_ELEMENT_DESC inputTextureElem[] = {
 			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(VertexWithNormal, pos),
@@ -142,7 +142,21 @@ void Game::Init(HWND hWnd, float width, float height)
 		Shader* SSRShader = new Shader();
 		SSRShader->Load(L"Shaders/SSR.hlsl", inputForDefferedRenderring, ARRAY_SIZE(inputForDefferedRenderring));
 		assetManager->SetShader(L"SSR", SSRShader);
+
+
+		//quad
+		D3D11_INPUT_ELEMENT_DESC quad[] = {
+			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(quadVertexBuffer, pos),
+			D3D11_INPUT_PER_VERTEX_DATA, 0 },
+			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(quadVertexBuffer, uv),
+			D3D11_INPUT_PER_VERTEX_DATA, 0 }
+		};
+		Shader* quadShader = new Shader();
+		quadShader->Load(L"Shaders/quadShader.hlsl", quad, ARRAY_SIZE(quad));
+		assetManager->SetShader(L"quadShader", quadShader);
 	}
+
+
 
 	mPhysics = new Physics();
 	//load level
@@ -313,7 +327,7 @@ void Game::RenderFrame()
 	mGraphics.ClearDepthBuffer(mGraphics.GetDepthView(), 1.0f);
 	devContext->OMSetRenderTargets(5, RTVArray, mGraphics.GetDepthView());
 	for (int i = 0; i < 5; i++) {
-		mGraphics.ClearRenderTarget(RTVArray[i], Graphics::Color4(0.0f, 0.0f, 0.0f, 1.0f));
+		mGraphics.ClearRenderTarget(RTVArray[i], Graphics::Color4(1.0f, 1.0f, 1.0f, 1.0f));
 	}
 	//mGraphics.SetRenderTarget(mGraphics.GetBackBuffer(), mGraphics.GetDepthView());
 	//mGraphics.ClearRenderTarget(Graphics::Color4(0.0f, 0.0f, 0.0f, 1.0f));
@@ -335,6 +349,25 @@ void Game::RenderFrame()
 	normalTexture->SetActive(Graphics::TEXTURE_SLOT_NORMAL);
 	GPdepthTexture->SetActive(Graphics::TEXTURE_SLOT_GPDEPTH);
 	shadowTexture->SetActive(Graphics::TEXTURE_SLOT_SHADOW);
+
+	//quadVertexBuffer vert[] =
+	//{
+	//	{Vector3(0,0,0), Vector2(0,0)},
+	//	{Vector3(1,0,0),Vector2(1,0)},
+	//	{Vector3(1,1,0),Vector2(1,1)},
+	//	{Vector3(0,1,0),Vector2(0,1)}
+	//};
+	//uint16_t indice[] = { 2,1,0,3,2,0 };
+	//VertexBuffer* quadVBuffer = new VertexBuffer(
+	//	vert, sizeof(vert)/sizeof(vert[0]), sizeof(vert[0]),
+	//	indice, sizeof(indice)/sizeof(indice[0]), sizeof(indice[0])
+	//);
+	//Material* mat = new Material();
+	//mat->SetShader(assetManager->GetShader(L"quadShader"));
+	//Mesh* quadMesh = new Mesh(quadVBuffer, mat);
+	//RenderObj* quad = new RenderObj(quadMesh);
+	//quad->Draw();
+
 
 	objectList[0]->Draw(assetManager->GetShader(L"lightPass"));		//light sphere
 	objectList[2]->Draw(assetManager->GetShader(L"lightPass"));		//robot
