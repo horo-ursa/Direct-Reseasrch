@@ -5,7 +5,7 @@
     },
     "shader": "Skinned",
     "textures": [
-        "Assets/Textures/SK_Mannequin.bmp"
+        "Assets/Textures/Jess_Casual_Walking_001_D.png"
     ],
     "diffuseColor": [ 1.0, 1.0, 1.0 ],
     "specularColor": [ 1.0, 1.0, 1.0 ],

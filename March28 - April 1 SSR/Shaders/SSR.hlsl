@@ -60,7 +60,7 @@ float GetDepth(float3 posWorld) {
 float GetGBufferDepth(float3 testPoint) {
 	float4 screenSpace = mul(float4(testPoint, 1.0), c_cameraSpaceViewProj);
 	screenSpace = screenSpace.xyzw / screenSpace.w;
-	float2 uv = screenSpace.xy * 0.5+ 0.5;
+	float2 uv = screenSpace.xy * 0.5 + 0.5;
 	uv.y = 1 - uv.y;
 	//float depth = depthGP.Load(float3(uv, 0)).r;
 	float depth = depthGP.Sample(DefaultSampler, uv).x;
@@ -94,23 +94,24 @@ float GetGBufferShadow(float2 uv) {
  */
 
 bool RayMarch(float4 ori, float4 dir, out float4 hitPoint) {
-	float step = 0.3;
+	float step = 0.5;
 	float4 endPoint = ori;
 
 	for (int i = 0; i < RAY_MARCH_TIME; i++) {
 		float4 testPoint = endPoint + dir * step;
 		float4 screenSpace = mul(testPoint, c_cameraSpaceViewProj);
-		float testDepth = screenSpace.z/screenSpace.w;
-		//float testDepth = screenSpace.z * 0.5 + 0.5;          //depth of the test point
-		screenSpace = screenSpace.xyzw / screenSpace.w;
+		float testDepth = screenSpace.z / screenSpace.w;
+		float4 viewSpace = mul(testPoint, c_viewMatrix);
+		//testDepth = abs(viewSpace.z);
 		float2 uv = screenSpace.xy * float2(0.5, -0.5) + 0.5;
-		float depthInGBuffer = depthGP.Sample(DefaultSampler, uv).z;  //depth in the depth map
+		float depthInGBuffer = abs(depthGP.Sample(DefaultSampler, uv).x);  //depth in the depth map
 
 		float marchedDis = distance(testPoint, ori);
 		if (marchedDis > MAX_MARCH_DIS) {                      //no intersection
 			return false;
 		}
-		if (testDepth - depthInGBuffer > 1e-5) {    //close enough, intersection
+
+		if (abs(testDepth - depthInGBuffer) < 1e-2) {    //close enough, intersection
 			hitPoint = testPoint;
 			return true;
 		}
@@ -181,49 +182,63 @@ vsOut VS(in vsIn input) {
 
 float4 PS(in vsOut input) : SV_Target
 {
-	/*
-	float3 normal = normalize(input.worldNormal.xyz);
+	float4 lightDir = float4(normalize(c_pointLight[0].position), 0.0);
+	float4 normal = float4(0, 0, 1, 0); //float4(normalize(input.worldNormal.xyz), 0.0);
+
+	float3 totalLighting = float3(0, 0, 0);
+	float3 indirectLighting = float3(0, 0, 0);
+
+	float4 diffuseColor = EvalDiffuse(lightDir, normal, input.worldPos);
+	float4 direcLight = EvalDirectionalLight(input.worldPos); // in shadow?
+	float4 directLighting = diffuseColor * direcLight;
+
+	float4 screen = mul(input.worldPos, c_cameraSpaceViewProj);
+	float2 uv = screen.xy / screen.w * float2(0.5, -0.5) + 0.5;
 	float3 position = input.worldPos.xyz;
 
-	float3 viewPos = mul(float4(position, 1.0), c_viewMatrix).xyz;
-	float3 viewNormal = mul(float4(normal, 0.0), c_viewMatrix).xyz;
-
-	float3 reflection = reflect(position, normal);
-
-	float3 outputColor = float3(0, 0, 0);
-
+	float3 camPos = float3(-500, 0, 300);
+	float3 viewDir = camPos - input.worldPos.xyz;
+	float3 reflection = reflect(-viewDir.xyz, normal.xyz);
+	float3 indirect_l = float3(0, 0, 0);
 	float3 step = reflection;
 	float3 newPosition = position + step;
-
 	for (int i = 0; i < 50; ++i)
 	{
 		//grab new position and convert to post projection space
-		float4 vPos = float4(viewPos, 1.0);
-		float4 samplePosition = mul(vPos, c_projMatrix);
-
+		float4 samplePosition = mul(float4(newPosition, 1.0), c_cameraSpaceViewProj);
 		// adjust from NDC to DirectX space..
 		samplePosition.xy = (samplePosition.xy / samplePosition.w) * float2(0.5, -0.5) + 0.5;
 
-		float currentDepth = abs(samplePosition.w);
+		float4 vPos = mul(float4(newPosition, 1.0), c_viewMatrix);
+		float currentDepth = abs(vPos.z) /*/ vPos.w*/;
 		//I multiply with far plane because we have our depth stored linearly by using viewPos.z / farPlane
-		float sampleDepth = abs(depthGP.Sample(DefaultSampler, samplePosition.xy).y);
+		float sampleDepth = abs(depthGP.Sample(DefaultSampler, samplePosition.xy).z);	//mrwTODO ?
 
 		//if depth is close enough then sample pixel color
-		if (abs(currentDepth - sampleDepth) < 0.001)
+		if (abs(currentDepth - sampleDepth) < 0.1)
 		{
-			outputColor = albedoGP.Sample(DefaultSampler, samplePosition.xy).xyz;
+			indirect_l = albedoGP.Sample(DefaultSampler, samplePosition.xy).xyz;
+			indirect_l = float3(0, 0, 1);
+			//return float4(outputColor, 1.0);
+			break;
+		}
+		else
+		{
+			indirect_l = float3(1, 1, 1);
 		}
 
 		//else keep stepping
 		step *= 1.0 - 0.5 * max(sign(currentDepth - sampleDepth), 0.0); //progress the step
-		newPosition += step * (sign(sampleDepth - currentDepth) + 0.000001); //set new position and loop again
-		outputColor = float3(0, 0, 0);
+		newPosition += step * (sign(sampleDepth - currentDepth)  ); //set new position and loop again
 	}
-	return float4(outputColor, 1.0);
-*/
-	float4 camPos = mul(float4(c_cameraPosition, 1.0), c_modelToWorld);
-	float4 viewDir = normalize(camPos - input.worldPos);
-	//float4 viewDir = normalize(float4(c_cameraPosition, 1.0) - input.worldPos);
+
+	totalLighting = directLighting.xyz *  indirect_l;
+	return float4(totalLighting, 1.0);
+	
+	
+
+	/*c_cameraPosition = float3(-500.0f, 0.0f, 300.0f);
+	float4 viewDir = normalize(float4(c_cameraPosition, 1.0) - input.worldPos);
 	float4 lightDir = float4(normalize(c_pointLight[0].position), 0.0);
 	float4 normal = float4(normalize(input.worldNormal.xyz), 0.0);
 
@@ -234,22 +249,20 @@ float4 PS(in vsOut input) : SV_Target
 	float4 direcLight = EvalDirectionalLight(input.worldPos); // in shadow?
 	float4 directLighting = diffuseColor * direcLight;
 
-	float4 temp = mul(input.worldPos, c_viewMatrix);
 
-	//float4 dir = float4(normalize(reflect(-viewDir, normal)).xyz, 0);
-	float4 dir = float4((float3(30, 0, 0)), 0.0);
-	
+	float4 dir = float4(normalize(reflect(-viewDir, normal)).xyz, 0);
+	//float4 dir = float4((float3(30, 0, 0)), 0.0);
 	float4 hitPos;
 	if (RayMarch(input.worldPos, dir, hitPos)) {
-		//return float4(1, 0, 0, 1);
+		return float4(1, 0, 0, 1);
 		float4 tempScreen = mul(hitPos, c_cameraSpaceViewProj);
 		float2 uv = tempScreen.xy / tempScreen.w * float2(0.5, -0.5) + 0.5;
 		indirectLighting = albedoGP.Sample(DefaultSampler, uv).xyz;
 		//indirectLighting *= EvalDirectionalLight(hitPos).xyz;
 	}
-	//return float4(0, 1, 0, 1);
+	return float4(0, 1, 0, 1);
 	totalLighting = indirectLighting + directLighting.xyz;
-	return float4(totalLighting, 1.0);
+	return float4(totalLighting, 1.0);*/
 
 	//float s = InitRand(input.worldPos.xy);
 	//for (int i = 0; i < SAMPLE_NUM; i++) {

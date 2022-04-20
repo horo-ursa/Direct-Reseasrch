@@ -333,7 +333,7 @@ void Game::RenderFrame()
 	//mGraphics.ClearRenderTarget(Graphics::Color4(0.0f, 0.0f, 0.0f, 1.0f));
 
 	objectList[0]->Draw(assetManager->GetShader(L"GPass"));		//light sphere
-	objectList[1]->Draw(assetManager->GetShader(L"GPass"));		//platform
+	objectList[1]->Draw(assetManager->GetShader(L"GPassSkin"));		//platform
 	objectList[2]->Draw(assetManager->GetShader(L"GPassSkin"));	//robot
 
 	mGraphics.SetActiveTexture(Graphics::TEXTURE_SLOT_DEPTHMAP, nullptr);

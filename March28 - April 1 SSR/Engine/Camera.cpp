@@ -12,7 +12,7 @@ Camera::Camera() : MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY), Zoom(ZOO
 	pGraphics = Graphics::Get();
 	projMatrix =  Matrix4::CreatePerspectiveFOV(Math::ToRadians(70.0f),
 			pGraphics->GetScreenWidth(), pGraphics->GetScreenHeight(),
-			25.0f, 10000.0f);
+			10.0f, 10000.0f);
 	//projMatrix = Matrix4::CreateOrtho(pGraphics->GetScreenWidth(), pGraphics->GetScreenHeight(),
 	//	0.0f, 10000.0f);
 	constBuffer = pGraphics->CreateGraphicsBuffer(&pcc, sizeof(pcc), D3D11_BIND_CONSTANT_BUFFER,
@@ -37,7 +37,7 @@ void Camera::SetActive() {
 	//Vector3 right = Cross(Vector3(0, 0, 1), Vector3(-1, 0, -1));
 	//Vector3 up = Cross(Vector3(-1, 0, -1), right);
 	//Matrix4 lightView = Matrix4::CreateLookAt(Vector3(300, 0, 300), Vector3(0, 0, 0), up);
-	Matrix4 lightView = Matrix4::CreateLookAt(Vector3(500, 500, 500), Vector3(0, 0, 0), Vector3(0,0,1));
+	Matrix4 lightView = Matrix4::CreateLookAt(Vector3(-300, 300, 600), Vector3(0, 0, 0), Vector3(0,0,1));
 	lightView.Invert();
 	Matrix4 viewProj = lightView * lightProjection;
 	pcc.c_lightSpaceViewProj = viewProj;

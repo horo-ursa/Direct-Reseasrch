@@ -52,11 +52,14 @@ GPassOut PS(in VertexToPixel input)
     float3 screenSpace = input.position.xyz / input.position.w;
     output.Albedo = float4(DiffuseTexture.Sample(DefaultSampler, input.uv).rgb, 1.0);
     output.Position = float4(input.worldPosition.xyz, 1.0);
-    output.Normal = float4(normalize(input.normal.xyz), 1.0); // DIFFERENT HERE
+    
+    output.Normal = float4(normalize(input.normal.xyz), 1.0); 
 
+
+    float4 viewPos = mul(input.worldPosition, c_viewMatrix);
     float4 projPos = mul(input.worldPosition, c_cameraSpaceViewProj);
     float4 scr = projPos.xyzw / projPos.w;
-    output.Depth = float4(input.worldPosition.x, input.vDepth, scr.z, 1.0);
+    output.Depth = float4(scr.z, input.vDepth, viewPos.z, 1.0);
     
 
     float inshadow = SimpleShadowMap(input.worldPosition, 0.01);
