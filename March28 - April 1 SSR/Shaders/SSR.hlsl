@@ -174,7 +174,7 @@ struct vsOut {
 vsOut VS(in vsIn input) {
 	vsOut output;
 	output.worldPos = mul(float4(input.position, 1.0), c_modelToWorld);
-	output.worldPos = output.worldPos.xyzw / output.worldPos.w;
+	//output.worldPos = output.worldPos.xyzw / output.worldPos.w;
 	output.screenPos = mul(output.worldPos, c_cameraSpaceViewProj);
 	output.worldNormal = mul(float4(input.normal, 0), c_modelToWorld);
 	return output;
@@ -192,17 +192,15 @@ float4 PS(in vsOut input) : SV_Target
 	float4 direcLight = EvalDirectionalLight(input.worldPos); // in shadow?
 	float4 directLighting = diffuseColor * direcLight;
 
-	float4 screen = mul(input.worldPos, c_cameraSpaceViewProj);
-	float2 uv = screen.xy / screen.w * float2(0.5, -0.5) + 0.5;
 	float3 position = input.worldPos.xyz;
 
 	float3 camPos = float3(-500, 0, 300);
-	float3 viewDir = camPos - input.worldPos.xyz;
+	float3 viewDir = c_cameraPosition - input.worldPos.xyz;
 	float3 reflection = reflect(-viewDir.xyz, normal.xyz);
 	float3 indirect_l = float3(0, 0, 0);
 	float3 step = reflection;
 	float3 newPosition = position + step;
-	for (int i = 0; i < 50; ++i)
+	for (int i = 0; i < 30; ++i)
 	{
 		//grab new position and convert to post projection space
 		float4 samplePosition = mul(float4(newPosition, 1.0), c_cameraSpaceViewProj);
@@ -210,10 +208,9 @@ float4 PS(in vsOut input) : SV_Target
 		samplePosition.xy = (samplePosition.xy / samplePosition.w) * float2(0.5, -0.5) + 0.5;
 
 		float4 vPos = mul(float4(newPosition, 1.0), c_viewMatrix);
-		float currentDepth = abs(vPos.z) /*/ vPos.w*/;
+		float currentDepth = abs(vPos.z); /*/ vPos.w*/
 		//I multiply with far plane because we have our depth stored linearly by using viewPos.z / farPlane
 		float sampleDepth = abs(depthGP.Sample(DefaultSampler, samplePosition.xy).z);	//mrwTODO ?
-
 		//if depth is close enough then sample pixel color
 		if (abs(currentDepth - sampleDepth) < 0.1)
 		{
@@ -229,7 +226,7 @@ float4 PS(in vsOut input) : SV_Target
 
 		//else keep stepping
 		step *= 1.0 - 0.5 * max(sign(currentDepth - sampleDepth), 0.0); //progress the step
-		newPosition += step * (sign(sampleDepth - currentDepth)  ); //set new position and loop again
+		newPosition += step * (sign(sampleDepth - currentDepth) + 0.0001); //set new position and loop again
 	}
 
 	totalLighting = directLighting.xyz *  indirect_l;
