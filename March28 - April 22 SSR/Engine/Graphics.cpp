@@ -107,7 +107,18 @@ void Graphics::InitD3D(HWND hWnd, float width, float height)
     sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
     sampDesc.MinLOD = 0;
     sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
-    mDev->CreateSamplerState(&sampDesc, &SamplerState);
+    mDev->CreateSamplerState(&sampDesc, &SamplerStateLinear);
+
+    D3D11_SAMPLER_DESC sampDesc2;
+    ZeroMemory(&sampDesc2, sizeof(sampDesc2));
+    sampDesc2.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+    sampDesc2.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+    sampDesc2.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+    sampDesc2.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+    sampDesc2.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    sampDesc2.MinLOD = 0;
+    sampDesc2.MaxLOD = D3D11_FLOAT32_MAX;
+    mDev->CreateSamplerState(&sampDesc2, &SamplerStatePoint);
     
     //setup RasterizerState
     ID3D11RasterizerState* RasterizerState;
@@ -128,7 +139,8 @@ void Graphics::InitD3D(HWND hWnd, float width, float height)
     
 
     //set active
-    SetActiveSampler(0, SamplerState);
+    SetActiveSampler(0, SamplerStateLinear);
+    SetActiveSampler(1, SamplerStatePoint);
 }
 
 void Graphics::CleanD3D()
@@ -150,7 +162,8 @@ void Graphics::CleanD3D()
     //mDepthState->Release();
     //mDepthAlphaState->Release();
     mDepthView->Release();
-    SamplerState->Release();
+    SamplerStateLinear->Release();
+    SamplerStatePoint->Release();
 
 #ifdef _DEBUG
     pDbg->ReportLiveDeviceObjects(D3D11_RLDO_DETAIL | D3D11_RLDO_IGNORE_INTERNAL);

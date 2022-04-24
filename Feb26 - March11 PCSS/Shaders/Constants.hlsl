@@ -68,7 +68,7 @@ float ShadowCalculation(float4 psPosLightSpace) {
 
 
 // Shadow map related variables
-#define NUM_SAMPLES  50
+#define NUM_SAMPLES  80
 #define BLOCKER_SEARCH_NUM_SAMPLES NUM_SAMPLES
 #define PCF_NUM_SAMPLES NUM_SAMPLES
 #define NUM_RINGS 10

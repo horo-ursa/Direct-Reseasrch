@@ -91,7 +91,8 @@ private:
     ID3D11RenderTargetView* mCurrentRenderTarget;
 
 
-    ID3D11SamplerState* SamplerState;
+    ID3D11SamplerState* SamplerStateLinear;
+    ID3D11SamplerState* SamplerStatePoint;
 
     ID3D11DepthStencilView* mDepthView;
     ID3D11DepthStencilState* mDepthAlphaState;

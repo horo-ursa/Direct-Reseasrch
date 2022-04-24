@@ -63,12 +63,12 @@ float GetGBufferDepth(float3 testPoint) {
 	float2 uv = screenSpace.xy * 0.5 + 0.5;
 	uv.y = 1 - uv.y;
 	//float depth = depthGP.Load(float3(uv, 0)).r;
-	float depth = depthGP.Sample(DefaultSampler, uv).x;
+	float depth = depthGP.Sample(PointSampler, uv).x;
 	return depth;
 }
 
 float3 GetGBufferNormalWorld(float2 uv) {
-	//return normalGP.Sample(DefaultSampler, uv).xyz;
+	//return normalGP.Sample(PointSampler, uv).xyz;
 	return normalGP.Load(float3(uv, 0)).xyz;
 }
 
@@ -77,12 +77,12 @@ float2 GetScreenCoordinate(float3 posWorld) {
 }
 
 float3 GetGBufferDiffuse(float2 uv) {
-	//return albedoGP.Sample(DefaultSampler, uv).xyz;
+	//return albedoGP.Sample(PointSampler, uv).xyz;
 	return albedoGP.Load(float3(uv, 0)).xyz;
 }
 
 float GetGBufferShadow(float2 uv) {
-	//return shadowGP.Sample(DefaultSampler, uv).x;
+	//return shadowGP.Sample(PointSampler, uv).x;
 	return shadowGP.Load(float3(uv, 0)).x;
 }
 
@@ -104,7 +104,7 @@ bool RayMarch(float4 ori, float4 dir, out float4 hitPoint) {
 		float4 viewSpace = mul(testPoint, c_viewMatrix);
 		//testDepth = abs(viewSpace.z);
 		float2 uv = screenSpace.xy * float2(0.5, -0.5) + 0.5;
-		float depthInGBuffer = abs(depthGP.Sample(DefaultSampler, uv).x);  //depth in the depth map
+		float depthInGBuffer = abs(depthGP.Sample(PointSampler, uv).x);  //depth in the depth map
 
 		float marchedDis = distance(testPoint, ori);
 		if (marchedDis > MAX_MARCH_DIS) {                      //no intersection
@@ -143,7 +143,7 @@ float4 EvalDiffuse(float4 wi, float4 normal, float4 worldPos) {
 	float4 screenPos = mul(worldPos, c_cameraSpaceViewProj);
 	float2 uv = screenPos.xy / screenPos.w * 0.5 + 0.5;
 	uv.y = 1 - uv.y;
-	float4 albedo = albedoGP.Sample(DefaultSampler, uv);
+	float4 albedo = albedoGP.Sample(PointSampler, uv);
 	//float3 normal = normalize(GetGBufferNormalWorld(uv));	//Get normal from normalGP
 	float cosTheta = max(0.0, dot(normal, wi));	//Cosine
 	return albedo * cosTheta;
@@ -155,7 +155,7 @@ float4 EvalDirectionalLight(float4 worldPos) {
 	float4 screenPos = mul(worldPos, c_cameraSpaceViewProj);
 	float2 uv = screenPos.xy / screenPos.w * 0.5 + 0.5;
 	uv.y = 1 - uv.y;
-	float visibility = shadowGP.Sample(DefaultSampler, uv).x;
+	float visibility = shadowGP.Sample(PointSampler, uv).x;
 	return float4(c_pointLight[0].lightColor, 1.0) * visibility;
 }
 
@@ -197,7 +197,8 @@ float4 PS(in vsOut input) : SV_Target
 	float3 camPos = float3(-500, 0, 300);
 	float3 viewDir = c_cameraPosition - input.worldPos.xyz;
 	float3 reflection = reflect(-viewDir.xyz, normal.xyz);
-	float3 indirect_l = float3(0, 0, 0);
+	float3 indirect_l = float3(1, 1, 1);
+#if 0	// bisection... not gonna work
 	float3 step = reflection;
 	float3 newPosition = position + step;
 	for (int i = 0; i < 30; ++i)
@@ -210,11 +211,11 @@ float4 PS(in vsOut input) : SV_Target
 		float4 vPos = mul(float4(newPosition, 1.0), c_viewMatrix);
 		float currentDepth = abs(vPos.z); /*/ vPos.w*/
 		//I multiply with far plane because we have our depth stored linearly by using viewPos.z / farPlane
-		float sampleDepth = abs(depthGP.Sample(DefaultSampler, samplePosition.xy).z);	//mrwTODO ?
+		float sampleDepth = abs(depthGP.Sample(PointSampler, samplePosition.xy).z);	//mrwTODO ?
 		//if depth is close enough then sample pixel color
 		if (abs(currentDepth - sampleDepth) < 0.1)
 		{
-			indirect_l = albedoGP.Sample(DefaultSampler, samplePosition.xy).xyz;
+			indirect_l = albedoGP.Sample(PointSampler, samplePosition.xy).xyz;
 			indirect_l = float3(0, 0, 1);
 			//return float4(outputColor, 1.0);
 			break;
@@ -228,11 +229,35 @@ float4 PS(in vsOut input) : SV_Target
 		step *= 1.0 - 0.5 * max(sign(currentDepth - sampleDepth), 0.0); //progress the step
 		newPosition += step * (sign(sampleDepth - currentDepth) + 0.0001); //set new position and loop again
 	}
+#else
+	float3 step = normalize(reflection) * 3.0;	// step size of 10 unit
 
-	totalLighting = directLighting.xyz *  indirect_l;
+	float3 newPosition = position + 5.0 * step;
+	float alpha = 1.0f;
+	for (int i = 0; i < 90; ++i)	// 40 maximum steps
+	{
+		float4 samplePosition = mul(float4(newPosition, 1.0), c_cameraSpaceViewProj);
+		samplePosition.xy = (samplePosition.xy / samplePosition.w) * float2(0.5, -0.5) + 0.5;
+		float4 vPos = mul(float4(newPosition, 1.0), c_viewMatrix);
+		float currentDepth = abs(vPos.z);
+		float sampleDepth = abs(depthGP.Sample(PointSampler, samplePosition.xy).z);
+
+		if (abs(sampleDepth - currentDepth) < 2)
+		{
+			indirect_l = albedoGP.Sample(PointSampler, samplePosition.xy).xyz;
+			//indirect_l = float4(alpha, 1 - alpha, 0, 1);	// this is to visualize how many steps it took
+			break;
+		}
+
+		newPosition = newPosition + step;
+		alpha = alpha - 1.0f / 60.0f;
+	}
+#endif
+
+	totalLighting = directLighting.xyz * indirect_l;
 	return float4(totalLighting, 1.0);
-	
-	
+
+
 
 	/*c_cameraPosition = float3(-500.0f, 0.0f, 300.0f);
 	float4 viewDir = normalize(float4(c_cameraPosition, 1.0) - input.worldPos);

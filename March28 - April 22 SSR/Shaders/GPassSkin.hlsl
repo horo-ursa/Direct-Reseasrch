@@ -3,8 +3,10 @@
 struct VertexInput
 {
     float3 position : POSITION0;
-    float3 normal   : NORMAL0;
-    float2 uv       : TEXCOORD0;
+    float3 normal : NORMAL0;
+    uint4  boneIndices : BLENDINDICES0;
+    float4 boneWeight : BLENDWEIGHT0;
+    float2 uv : TEXCOORD0;
 };
 
 struct VertexToPixel
@@ -13,7 +15,7 @@ struct VertexToPixel
     float4 normal          : NORMAL0;
     float2 uv              : TEXCOORD0;
     float4 worldPosition   : POSITION1;
-    float  vDepth          : DEPTH0;
+    float  vDepth : DEPTH0;
 };
 
 struct GPassOut {
@@ -23,6 +25,7 @@ struct GPassOut {
     float4 Depth    : SV_Target3;
     float4 Shadow   : SV_Target4;
 };
+
 
 float SimpleShadowMap(float4 posWorld, float bias) {
     float4 posLight = mul(posWorld, c_lightSpaceViewProj);
@@ -44,6 +47,7 @@ VertexToPixel VS(in VertexInput input) {
     output.uv = input.uv;
     output.vDepth = output.position.w;
     return output;
+
 }
 
 GPassOut PS(in VertexToPixel input)
@@ -52,17 +56,15 @@ GPassOut PS(in VertexToPixel input)
     float3 screenSpace = input.position.xyz / input.position.w;
     output.Albedo = float4(DiffuseTexture.Sample(DefaultSampler, input.uv).rgb, 1.0);
     output.Position = float4(input.worldPosition.xyz, 1.0);
-    
-    output.Normal = float4(normalize(input.normal.xyz), 1.0); 
-
+    output.Normal = float4(normalize(input.normal.xyz), 1.0); // DIFFERENT HERE
 
     float4 viewPos = mul(input.worldPosition, c_viewMatrix);
     float4 projPos = mul(input.worldPosition, c_cameraSpaceViewProj);
     float4 scr = projPos.xyzw / projPos.w;
     output.Depth = float4(scr.z, input.vDepth, viewPos.z, 1.0);
-    
 
-    float inshadow = SimpleShadowMap(input.worldPosition, 0.01);
+
+    float inshadow = SimpleShadowMap(input.worldPosition, 0.001);
     output.Shadow = float4(inshadow, inshadow, inshadow, 1.0);
 
     return output;

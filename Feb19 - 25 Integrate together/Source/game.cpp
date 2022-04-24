@@ -170,7 +170,7 @@ void Game::RenderFrame()
 	//	mGraphics.ClearDepthBuffer(view, 1.0f);
 	//}
 
-	Graphics::Color4 clearColor(0.0f, 0.2f, 0.4f, 1.0f);
+	Graphics::Color4 clearColor(0.3f, 0.3f, 0.3f, 1.0f);
 	mGraphics.BeginFrame(clearColor);
 
 	camera->SetActive(); 

@@ -164,10 +164,10 @@ void Game::Init(HWND hWnd, float width, float height)
 
 	//set up lighting buffer
 	lightingBuffer = mGraphics.CreateGraphicsBuffer(
-		&lightConst, 
+		&lightConst,
 		sizeof(Lights::LightingConstants),
-		D3D11_BIND_CONSTANT_BUFFER, 
-		D3D11_CPU_ACCESS_WRITE, 
+		D3D11_BIND_CONSTANT_BUFFER,
+		D3D11_CPU_ACCESS_WRITE,
 		D3D11_USAGE_DYNAMIC
 	);
 
@@ -327,7 +327,7 @@ void Game::RenderFrame()
 	mGraphics.ClearDepthBuffer(mGraphics.GetDepthView(), 1.0f);
 	devContext->OMSetRenderTargets(5, RTVArray, mGraphics.GetDepthView());
 	for (int i = 0; i < 5; i++) {
-		mGraphics.ClearRenderTarget(RTVArray[i], Graphics::Color4(1.0f, 1.0f, 1.0f, 1.0f));
+		mGraphics.ClearRenderTarget(RTVArray[i], Graphics::Color4(1.0f, 1.0f, 10000.0f, 1.0f));
 	}
 	//mGraphics.SetRenderTarget(mGraphics.GetBackBuffer(), mGraphics.GetDepthView());
 	//mGraphics.ClearRenderTarget(Graphics::Color4(0.0f, 0.0f, 0.0f, 1.0f));
@@ -468,7 +468,7 @@ bool Game::IsKeyHeld(uint32_t key) const
 
 bool Game::LoadLevel(const WCHAR* fileName)
 {
-	
+
 	std::ifstream file(fileName);
 	if (!file.is_open())
 	{
@@ -543,7 +543,7 @@ bool Game::LoadLevel(const WCHAR* fileName)
 		else {
 			obj = new RenderObj(mesh);
 		}
-		
+
 		obj->position = position;
 		obj->match.c_modelToWorld = Matrix4::CreateScale(scale)
 			* Matrix4::CreateFromQuaternion(rotation)
@@ -557,7 +557,7 @@ bool Game::LoadLevel(const WCHAR* fileName)
 			return false;
 		}
 		else if (componentData.Size() < 1) {
-			continue; 
+			continue;
 		}
 
 		for (rapidjson::SizeType j = 0; j < componentData.Size(); j++) {

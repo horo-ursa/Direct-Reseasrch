@@ -37,7 +37,7 @@ void Camera::SetActive() {
 	//Vector3 right = Cross(Vector3(0, 0, 1), Vector3(-1, 0, -1));
 	//Vector3 up = Cross(Vector3(-1, 0, -1), right);
 	//Matrix4 lightView = Matrix4::CreateLookAt(Vector3(300, 0, 300), Vector3(0, 0, 0), up);
-	Matrix4 lightView = Matrix4::CreateLookAt(Vector3(300, 200, 300), Vector3(0, 0, 0), Vector3(0,0,1));
+	Matrix4 lightView = Matrix4::CreateLookAt(Vector3(600, 200, 300), Vector3(0, 0, 0), Vector3(0,0,1));
 	lightView.Invert();
 	Matrix4 viewProj = lightView * lightProjection;
 	pcc.c_lightSpaceViewProj = viewProj;

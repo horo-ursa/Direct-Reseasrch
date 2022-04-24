@@ -53,6 +53,8 @@ cbuffer depthMask : register(b5)
 
 SamplerState DefaultSampler : register(s0);
 
+SamplerState PointSampler : register(s1);
+
 //-----------------------------------TEXTURE2D-----------------------------------//
 Texture2D DiffuseTexture : register(t0);
 Texture2D DepthMap : register(t1);

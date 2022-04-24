@@ -5,7 +5,7 @@
 Camera::Camera() : MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY), Zoom(ZOOM) {
 	//x forward, y is to the right, z is up
 	WorldUp = Vector3(0, 0, 1);
-	Position = Vector3(-500, 0, 300.f);
+	Position = Vector3(-250, 0, 150.f);
 	Yaw = YAW;
 	Pitch = PITCH;
 	updateCameraVectors();
@@ -37,7 +37,7 @@ void Camera::SetActive() {
 	//Vector3 right = Cross(Vector3(0, 0, 1), Vector3(-1, 0, -1));
 	//Vector3 up = Cross(Vector3(-1, 0, -1), right);
 	//Matrix4 lightView = Matrix4::CreateLookAt(Vector3(300, 0, 300), Vector3(0, 0, 0), up);
-	Matrix4 lightView = Matrix4::CreateLookAt(Vector3(-300, 300, 600), Vector3(0, 0, 0), Vector3(0,0,1));
+	Matrix4 lightView = Matrix4::CreateLookAt(Vector3(-300, 300, 400), Vector3(0, 0, 0), Vector3(0,0,1));
 	lightView.Invert();
 	Matrix4 viewProj = lightView * lightProjection;
 	pcc.c_lightSpaceViewProj = viewProj;
