@@ -8,6 +8,7 @@ cbuffer PerCameraConstants : register(b0)
     float4x4 c_viewMatrix;
     float4x4 c_projMatrix;
     float3 c_cameraPosition;
+    float3 c_upVector;
 };
 
 cbuffer PerObjectConstants : register(b1)
@@ -51,9 +52,12 @@ cbuffer depthMask : register(b5)
     bool isLightPass;
 }
 
+//-----------------------------------SAMPLER-----------------------------------//
 SamplerState DefaultSampler : register(s0);
-
 SamplerState PointSampler : register(s1);
+SamplerState WallNormalSampler : register(s1);
+SamplerState WallHeightSampler : register(s2);
+SamplerState ParticleSampler : register(s3);
 
 //-----------------------------------TEXTURE2D-----------------------------------//
 Texture2D DiffuseTexture : register(t0);
@@ -63,6 +67,7 @@ Texture2D albedoGP : register(t3);
 Texture2D normalGP : register(t4);
 Texture2D depthGP : register(t5);
 Texture2D shadowGP : register(t6);
+Texture2D ParticleTexture : register(t7);
 
 
 //constant functions
@@ -79,7 +84,7 @@ float ShadowCalculation(float4 psPosLightSpace) {
 
 
 // Shadow map related variables
-#define NUM_SAMPLES  100
+#define NUM_SAMPLES  50
 #define BLOCKER_SEARCH_NUM_SAMPLES NUM_SAMPLES
 #define PCF_NUM_SAMPLES NUM_SAMPLES
 #define NUM_RINGS 10
@@ -202,7 +207,6 @@ float PCSS(float4 psPosLightSpace) {
     float wPenumbra = (zReceiver - zBlocker) * wLight / zBlocker;
     // STEP 3: filtering
     return PCF(psPosLightSpace, wPenumbra);
-
 }
 
 

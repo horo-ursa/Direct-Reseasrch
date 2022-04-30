@@ -48,6 +48,7 @@ void Camera::SetActive() {
 	pcc.c_cameraSpaceViewProj = worldToCameraMatrix * projMatrix;
 	pcc.c_viewMatrix = worldToCameraMatrix;
 	pcc.c_projMatrix = projMatrix;
+	pcc.UpVector = Up;
 
 	pGraphics->UploadBuffer(constBuffer, &pcc, sizeof(pcc));
 	pGraphics->GetDeviceContext()->VSSetConstantBuffers(

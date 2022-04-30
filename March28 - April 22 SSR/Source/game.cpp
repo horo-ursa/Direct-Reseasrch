@@ -213,6 +213,10 @@ void Game::Init(HWND hWnd, float width, float height)
 	RTVArray[3] = GPdepthTarget;
 	RTVArray[4] = shadowTarget;
 
+	partEmitter = new ParticleEmitter();
+	partEmitter->SetRange(4000, 4000, -2000);
+	partEmitter->GenerateParticle(100);
+
 	////obj loader
 	//objl::Loader Loader;
 	//bool loadresult = Loader.LoadFile("Assets/Meshes/woman.obj");
@@ -303,6 +307,7 @@ void Game::Update(float deltaTime)
 		obj->Update(0.0f);
 	}
 	inputhandler->Execute();
+	partEmitter->Update(deltaTime);
 }
 
 void Game::RenderFrame()
@@ -314,7 +319,7 @@ void Game::RenderFrame()
 	mGraphics.UploadBuffer(lightingBuffer, &lightConst, sizeof(Lights::LightingConstants));
 	mGraphics.GetDeviceContext()->PSSetConstantBuffers(mGraphics.CONSTANT_BUFFER_LIGHTING, 1, &lightingBuffer);
 
-	//Pass 1: DepthMap pass, create the depth texture from light                                  CHECKED
+	//Pass 1: DepthMap pass, create the depth texture from light                                
 	mGraphics.ClearDepthBuffer(mDSV, 1.0);
 	mGraphics.SetRenderTarget(Pass1depthTarget, mDSV);
 	mGraphics.ClearRenderTarget(Graphics::Color4(1.0f, 1.0f, 1.0f, 1.0f));
@@ -342,7 +347,7 @@ void Game::RenderFrame()
 	//Pass 3: Lighting pass, do SSR here
 	mGraphics.ClearDepthBuffer(mGraphics.GetDepthView(), 1.0f);
 	mGraphics.SetRenderTarget(mGraphics.GetBackBuffer(), mGraphics.GetDepthView());
-	mGraphics.ClearRenderTarget(Graphics::Color4(0.5f, 0.5f, 0.5f, 1.0f));
+	mGraphics.ClearRenderTarget(Graphics::Color4(0.3f, 0.3f, 0.3f, 1.0f));
 
 	positionTexture->SetActive(Graphics::TEXTURE_SLOT_POSITION);
 	albedoSpecTexture->SetActive(Graphics::TEXTURE_SLOT_ALBEDO);
@@ -350,28 +355,13 @@ void Game::RenderFrame()
 	GPdepthTexture->SetActive(Graphics::TEXTURE_SLOT_GPDEPTH);
 	shadowTexture->SetActive(Graphics::TEXTURE_SLOT_SHADOW);
 
-	//quadVertexBuffer vert[] =
-	//{
-	//	{Vector3(0,0,0), Vector2(0,0)},
-	//	{Vector3(1,0,0),Vector2(1,0)},
-	//	{Vector3(1,1,0),Vector2(1,1)},
-	//	{Vector3(0,1,0),Vector2(0,1)}
-	//};
-	//uint16_t indice[] = { 2,1,0,3,2,0 };
-	//VertexBuffer* quadVBuffer = new VertexBuffer(
-	//	vert, sizeof(vert)/sizeof(vert[0]), sizeof(vert[0]),
-	//	indice, sizeof(indice)/sizeof(indice[0]), sizeof(indice[0])
-	//);
-	//Material* mat = new Material();
-	//mat->SetShader(assetManager->GetShader(L"quadShader"));
-	//Mesh* quadMesh = new Mesh(quadVBuffer, mat);
-	//RenderObj* quad = new RenderObj(quadMesh);
-	//quad->Draw();
-
-
 	objectList[0]->Draw(assetManager->GetShader(L"lightPass"));		//light sphere
 	objectList[2]->Draw(assetManager->GetShader(L"lightPass"));		//robot
 	objectList[1]->Draw(assetManager->GetShader(L"SSR"));			//platform
+
+	// Particle System
+	mGraphics.BeginAlpha();
+	partEmitter->Render();
 
 	mGraphics.SetActiveTexture(Graphics::TEXTURE_SLOT_POSITION, nullptr);
 	mGraphics.SetActiveTexture(Graphics::TEXTURE_SLOT_ALBEDO, nullptr);
@@ -380,58 +370,9 @@ void Game::RenderFrame()
 	mGraphics.SetActiveTexture(Graphics::TEXTURE_SLOT_SHADOW, nullptr);
 	devContext->OMSetRenderTargets(0, nullptr, nullptr);
 
+
 	mGraphics.EndFrame();
 
-
-
-
-
-	/*Pass 1, the depth buffer contains the depth values for the scene*/
-	// Set the render target
-	//mGraphics.SetRenderTarget(depthTarget, mGraphics.GetDepthView());
-	//mGraphics.SetRenderTarget(mGraphics.GetBackBuffer(), mGraphics.GetDepthView());
-	//{
-	//	Graphics::Color4 clearColor(1.0f, 1.0f, 1.0f, 1.0f);
-	//	mGraphics.ClearRenderTarget(clearColor);
-	//	mGraphics.ClearDepthBuffer(mGraphics.GetDepthView(), 1.0f);
-	//}
-
-	////set up camera
-	//camera->SetActive();
-
-	////upload light buffer
-	//mGraphics.UploadBuffer(lightingBuffer, &lightConst, sizeof(Lights::LightingConstants));
-	//mGraphics.GetDeviceContext()->PSSetConstantBuffers(mGraphics.CONSTANT_BUFFER_LIGHTING, 1, &lightingBuffer);
-	////upload depthmask buffer
-	//mask.isDepth = true;
-	//mGraphics.UploadBuffer(maskBuffer, &mask, sizeof(shaderMask));
-	//mGraphics.GetDeviceContext()->VSSetConstantBuffers(mGraphics.CONSTANT_BUFFER_DEPTHMASK, 1, &maskBuffer);
-	//mGraphics.GetDeviceContext()->PSSetConstantBuffers(mGraphics.CONSTANT_BUFFER_DEPTHMASK, 1, &maskBuffer);
-
-	////draw objects
- // 	for (auto& object : objectList) {
-	//	object->Draw();
-	//}
-
-	///*Pass 2*/
-	////mGraphics.GetDeviceContext()->OMSetDepthStencilState(DSS, 0);
-	////mGraphics.SetRenderTarget(mGraphics.GetBackBuffer(), mDSV);
-	////{
-	////	Graphics::Color4 clearColor(0.5f, 0.5f, 0.5f, 1.0f);
-	////	mGraphics.ClearRenderTarget(clearColor);
-	////	mGraphics.ClearDepthBuffer(mDSV, 1.0f);
-	////}
-
-	////mask.isDepth = false;
-	////mGraphics.UploadBuffer(maskBuffer, &mask, sizeof(depthMask));
-	////mGraphics.GetDeviceContext()->VSSetConstantBuffers(mGraphics.CONSTANT_BUFFER_DEPTHMASK, 1, &maskBuffer);
-	////mGraphics.GetDeviceContext()->PSSetConstantBuffers(mGraphics.CONSTANT_BUFFER_DEPTHMASK, 1, &maskBuffer);
-	////depthTexture->SetActive(mGraphics.TEXTURE_SLOT_DEPTHMAP);
-	////for (auto& object : objectList) {
-	////	object->Draw();
-	////}
-	////mGraphics.SetActiveTexture(mGraphics.TEXTURE_SLOT_DEPTHMAP, nullptr);
-	//mGraphics.EndFrame();
 }
 
 void Game::OnKeyDown(uint32_t key)

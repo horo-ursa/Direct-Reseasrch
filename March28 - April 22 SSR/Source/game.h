@@ -11,6 +11,7 @@
 #include "Physics.h"
 #include "InputHandler.h"
 #include "GeometryShader.h"
+#include "ParticleEmitter.h"
 
 class Shader;
 
@@ -100,5 +101,7 @@ private:
 	ID3D11DeviceContext* devContext;
 	ID3D11RenderTargetView* RTVArray[5];
 
+	//---------------------------------------Particle System---------------------------------------//
+	ParticleEmitter* partEmitter;
 
 };

@@ -8,6 +8,9 @@
     <Filter Include="Source Files\Shader">
       <UniqueIdentifier>{5ff7ef17-a9f1-4b32-99f3-b6400ce0259d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\ParticleEmitter">
+      <UniqueIdentifier>{0f79c4e7-fdd7-4b23-9436-c6f40e54d6c3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Graphics.cpp">
@@ -75,6 +78,9 @@
     </ClCompile>
     <ClCompile Include="Shader.cpp">
       <Filter>Source Files\Shader</Filter>
+    </ClCompile>
+    <ClCompile Include="ParticleEmitter.cpp">
+      <Filter>Source Files\ParticleEmitter</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -158,6 +164,9 @@
     </ClInclude>
     <ClInclude Include="OBJ_Loader.h">
       <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ParticleEmitter.h">
+      <Filter>Source Files\ParticleEmitter</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

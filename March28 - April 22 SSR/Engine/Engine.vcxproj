@@ -32,6 +32,7 @@
     <ClCompile Include="jsonUtil.cpp" />
     <ClCompile Include="Material.cpp" />
     <ClCompile Include="mesh.cpp" />
+    <ClCompile Include="ParticleEmitter.cpp" />
     <ClCompile Include="Physics.cpp" />
     <ClCompile Include="RenderObj.cpp" />
     <ClCompile Include="Shader.cpp" />
@@ -64,6 +65,7 @@
     <ClInclude Include="Material.h" />
     <ClInclude Include="mesh.h" />
     <ClInclude Include="OBJ_Loader.h" />
+    <ClInclude Include="ParticleEmitter.h" />
     <ClInclude Include="Physics.h" />
     <ClInclude Include="RenderObj.h" />
     <ClInclude Include="Shader.h" />

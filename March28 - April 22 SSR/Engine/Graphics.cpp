@@ -17,7 +17,7 @@ Graphics::Graphics()
     , mBackBuffer(nullptr)
     , mCurrentRenderTarget(nullptr)
     //, mDepthState(nullptr)
-    //, mDepthAlphaState(nullptr)
+    , mDepthAlphaState(nullptr)
 {
     DbgAssert(nullptr == s_theGraphics, "You can only have 1 Graphics");
     s_theGraphics = this;
@@ -94,6 +94,7 @@ void Graphics::InitD3D(HWND hWnd, float width, float height)
     CreateDepthStencil(width, height, &depthStencilResource, &mDepthView);
     //create the depth stencil state
     state = CreateDepthStencilState(D3D11_COMPARISON_LESS);
+    mDepthAlphaState = CreateDepthStencilState(D3D11_COMPARISON_LESS_EQUAL);
     //bind the depth-stencil state to Output Merge stage
     mDevCon->OMSetDepthStencilState(state, 0);
     
@@ -121,26 +122,29 @@ void Graphics::InitD3D(HWND hWnd, float width, float height)
     mDev->CreateSamplerState(&sampDesc2, &SamplerStatePoint);
     
     //setup RasterizerState
-    ID3D11RasterizerState* RasterizerState;
-    D3D11_RASTERIZER_DESC rastDesc;
-    ZeroMemory(&rastDesc, sizeof(rastDesc));
-    rastDesc.FillMode = D3D11_FILL_SOLID;
-    rastDesc.CullMode = D3D11_CULL_BACK;
-    rastDesc.FrontCounterClockwise = true;
-    rastDesc.SlopeScaledDepthBias = 0.0f;
-    rastDesc.DepthBiasClamp = 0.0f;
-    rastDesc.DepthClipEnable = true;
-    rastDesc.ScissorEnable = false;
-    rastDesc.MultisampleEnable = false;
-    rastDesc.AntialiasedLineEnable = false;
-    mDev->CreateRasterizerState(&rastDesc, &RasterizerState);
-    mDevCon->RSSetState(RasterizerState);
-    RasterizerState->Release();
+    //ID3D11RasterizerState* RasterizerState;
+    //D3D11_RASTERIZER_DESC rastDesc;
+    //ZeroMemory(&rastDesc, sizeof(rastDesc));
+    //rastDesc.FillMode = D3D11_FILL_SOLID;
+    //rastDesc.CullMode = D3D11_CULL_BACK;
+    //rastDesc.FrontCounterClockwise = true;
+    //rastDesc.SlopeScaledDepthBias = 0.0f;
+    //rastDesc.DepthBiasClamp = 0.0f;
+    //rastDesc.DepthClipEnable = true;
+    //rastDesc.ScissorEnable = false;
+    //rastDesc.MultisampleEnable = false;
+    //rastDesc.AntialiasedLineEnable = false;
+    //mDev->CreateRasterizerState(&rastDesc, &RasterizerState);
+    //mDevCon->RSSetState(RasterizerState);
+    //RasterizerState->Release();
     
+    //setup RasterizerState
+    SetupRasterizerState(D3D11_FILL_SOLID);
 
     //set active
     SetActiveSampler(0, SamplerStateLinear);
     SetActiveSampler(1, SamplerStatePoint);
+
 }
 
 void Graphics::CleanD3D()
@@ -160,7 +164,7 @@ void Graphics::CleanD3D()
     state->Release();
     depthStencilResource->Release();
     //mDepthState->Release();
-    //mDepthAlphaState->Release();
+    mDepthAlphaState->Release();
     mDepthView->Release();
     SamplerStateLinear->Release();
     SamplerStatePoint->Release();
@@ -364,4 +368,66 @@ void Graphics::SetBlendState(ID3D11BlendState* inBlendState)
 void Graphics::BeginAlpha()
 {
     mDevCon->OMSetDepthStencilState(mDepthAlphaState, 0);
+}
+
+void Graphics::BeginFrame(const Color4& clearColor)
+{
+    mDevCon->OMSetRenderTargets(1, &mBackBuffer, mDepthView);
+    mDevCon->OMSetDepthStencilState(mDepthState, 0);
+    mDevCon->ClearDepthStencilView(mDepthView, D3D11_CLEAR_DEPTH, 1.0f, 0);
+    mDevCon->ClearRenderTargetView(mBackBuffer, reinterpret_cast<const float*>(&clearColor));
+}
+
+ID3D11SamplerState* Graphics::CreateSamplerState() {
+    ID3D11SamplerState* samplerstate;
+    D3D11_SAMPLER_DESC sampDesc;
+    ZeroMemory(&sampDesc, sizeof(sampDesc));
+    sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+    sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+    sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+    sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    sampDesc.MinLOD = 0;
+    sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+    mDev->CreateSamplerState(&sampDesc, &samplerstate);
+    return samplerstate;
+}
+
+void Graphics::PSSetActiveSampler(int slot, ID3D11SamplerState* pSampler)
+{
+    mDevCon->PSSetSamplers(slot, 1, &pSampler);
+}
+
+void Graphics::PSSetActiveTexture(int slot, ID3D11ShaderResourceView* pView)
+{
+    mDevCon->PSSetShaderResources(slot, 1, &pView);
+}
+
+void Graphics::DSSetActiveTexture(int slot, ID3D11ShaderResourceView* pView)
+{
+    mDevCon->DSSetShaderResources(slot, 1, &pView);
+}
+
+void Graphics::DSSetActiveSampler(int slot, ID3D11SamplerState* pSampler)
+{
+    mDevCon->DSSetSamplers(slot, 1, &pSampler);
+}
+
+void Graphics::SetupRasterizerState(D3D11_FILL_MODE mode)
+{
+    ID3D11RasterizerState* RasterizerState;
+    D3D11_RASTERIZER_DESC rastDesc;
+    ZeroMemory(&rastDesc, sizeof(rastDesc));
+    rastDesc.FillMode = mode;
+    rastDesc.CullMode = D3D11_CULL_NONE;
+    rastDesc.FrontCounterClockwise = true;
+    rastDesc.SlopeScaledDepthBias = 0.0f;
+    rastDesc.DepthBiasClamp = 0.0f;
+    rastDesc.DepthClipEnable = true;
+    rastDesc.ScissorEnable = false;
+    rastDesc.MultisampleEnable = true;
+    rastDesc.AntialiasedLineEnable = true;
+    mDev->CreateRasterizerState(&rastDesc, &RasterizerState);
+    mDevCon->RSSetState(RasterizerState);
+    RasterizerState->Release();
 }

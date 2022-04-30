@@ -1,6 +1,6 @@
 #include "Constants.hlsl"
 
-#define RAY_MARCH_TIME 30
+#define RAY_MARCH_TIME 90
 #define MAX_MARCH_DIS 500
 #define M_PI 3.1415926535897932384626433832795
 #define TWO_PI 6.283185307
@@ -201,7 +201,7 @@ float4 PS(in vsOut input) : SV_Target
 #if 0	// bisection... not gonna work
 	float3 step = reflection;
 	float3 newPosition = position + step;
-	for (int i = 0; i < 30; ++i)
+	for (int i = 0; i < 15; ++i)
 	{
 		//grab new position and convert to post projection space
 		float4 samplePosition = mul(float4(newPosition, 1.0), c_cameraSpaceViewProj);
@@ -234,7 +234,7 @@ float4 PS(in vsOut input) : SV_Target
 
 	float3 newPosition = position + 5.0 * step;
 	float alpha = 1.0f;
-	for (int i = 0; i < 90; ++i)	// 40 maximum steps
+	for (int i = 0; i < RAY_MARCH_TIME; ++i)	// 40 maximum steps
 	{
 		float4 samplePosition = mul(float4(newPosition, 1.0), c_cameraSpaceViewProj);
 		samplePosition.xy = (samplePosition.xy / samplePosition.w) * float2(0.5, -0.5) + 0.5;

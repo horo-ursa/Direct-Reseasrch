@@ -14,6 +14,8 @@ public:
     int GetHeight() const { return mHeight; }
     void SetActive(int slot) const;
     ID3D11RenderTargetView* CreateRenderTarget(int inWidth, int inHeight, DXGI_FORMAT format);
+    void PSSetActive(int slot) const;
+    void DSSetActive(int slot) const;
 
 private:
     ID3D11Resource *mResource;

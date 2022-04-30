@@ -71,10 +71,10 @@ static bool LoadShader(const WCHAR* filename, const char* entryPoint, const char
 bool Shader::Load(const WCHAR* fileName, const D3D11_INPUT_ELEMENT_DESC* layoutArray, int numLayoutElements)
 {
     ID3DBlob* pBlobVS = nullptr;
-    if (LoadShader(fileName, "VS", "vs_4_0", pBlobVS))
+    if (LoadShader(fileName, "VS", "vs_5_0", pBlobVS))
     {
         ID3DBlob* pBlobPS = nullptr;
-        if (LoadShader(fileName, "PS", "ps_4_0", pBlobPS))
+        if (LoadShader(fileName, "PS", "ps_5_0", pBlobPS))
         {
             Graphics* pGraphics = Graphics::Get();
             HRESULT hr = pGraphics->GetDevice()->CreateVertexShader(pBlobVS->GetBufferPointer(), pBlobVS->GetBufferSize(), nullptr, &mShaderVS);

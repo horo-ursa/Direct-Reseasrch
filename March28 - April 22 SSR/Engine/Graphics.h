@@ -14,6 +14,7 @@ public:
         TEXTURE_SLOT_NORMAL,
         TEXTURE_SLOT_GPDEPTH,
         TEXTURE_SLOT_SHADOW,
+        TEXTURE_SLOT_PARTICLE,
 		TEXTURE_SLOT_TOTAL
     };
 
@@ -26,6 +27,14 @@ public:
         CONSTANT_BUFFER_Skin,
         CONSTANT_BUFFER_DEPTHMASK
 	};
+
+    enum SamplerSlot
+    {
+        SAMPLER_SLOT_WALL,
+        SAMPLER_SLOT_WALLNORMAL,
+        SAMPLER_SLOT_WALLHEIGHT,
+        SAMPLER_SLOT_PARTICLE
+    };
 
     class Color4
     {
@@ -75,6 +84,13 @@ public:
     ID3D11BlendState* CreateBlendState(bool enable, D3D11_BLEND srcBlend, D3D11_BLEND dstBlend);
     void SetBlendState(ID3D11BlendState* inBlendState);
     void BeginAlpha();
+    void BeginFrame(const Color4& clearColor);
+    ID3D11SamplerState* CreateSamplerState();
+    void PSSetActiveTexture(int slot, ID3D11ShaderResourceView* pView);
+    void PSSetActiveSampler(int slot, ID3D11SamplerState* pSampler);
+    void DSSetActiveTexture(int slot, ID3D11ShaderResourceView* pView);
+    void DSSetActiveSampler(int slot, ID3D11SamplerState* pSampler);
+    void SetupRasterizerState(D3D11_FILL_MODE mode);
 
     ID3D11Texture2D* depthStencilResource;
     ID3D11DepthStencilState* state;

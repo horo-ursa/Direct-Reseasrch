@@ -111,3 +111,14 @@ ID3D11RenderTargetView* Texture::CreateRenderTarget(int inWidth, int inHeight, D
     pDev->CreateRenderTargetView(mResource, &renderDesc, &rtv);
     return rtv;
 }
+
+
+void Texture::PSSetActive(int slot) const
+{
+    Graphics::Get()->PSSetActiveTexture(slot, mView);
+}
+
+void Texture::DSSetActive(int slot) const
+{
+    Graphics::Get()->DSSetActiveTexture(slot, mView);
+}

@@ -8,6 +8,8 @@ struct PerCameraConstants
     Matrix4 c_projMatrix;
     Vector3 c_cameraPosition;
     float padding3 = 0.0f;
+    Vector3 UpVector;
+    float padding2 = 0.0f;
 };
 
 class Graphics;

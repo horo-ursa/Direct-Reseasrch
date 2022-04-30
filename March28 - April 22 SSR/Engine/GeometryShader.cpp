@@ -25,7 +25,7 @@ static bool LoadShader(const WCHAR* filename, const char* entryPoint, const char
 {
     HRESULT hr = S_OK;
 
-    DWORD dwShaderFlags = D3DCOMPILE_ENABLE_STRICTNESS;
+    DWORD dwShaderFlags = /*D3DCOMPILE_ENABLE_STRICTNESS*/D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY;
 #ifdef _DEBUG
     // Set the D3DCOMPILE_DEBUG flag to embed debug information in the shaders.
     // Setting this flag improves the shader debugging experience, but still allows 
@@ -104,5 +104,7 @@ void GeometryShader::SetActive() const
     pGraphics->GetDeviceContext()->VSSetShader(mShaderVS, nullptr, 0);
     pGraphics->GetDeviceContext()->PSSetShader(mShaderPS, nullptr, 0);
     pGraphics->GetDeviceContext()->GSSetShader(mShaderGS, nullptr, 0);
+    pGraphics->GetDeviceContext()->DSSetShader(nullptr, nullptr, 0);
+    pGraphics->GetDeviceContext()->HSSetShader(nullptr, nullptr, 0);
     pGraphics->GetDeviceContext()->IASetInputLayout(mInputLayout);
 }

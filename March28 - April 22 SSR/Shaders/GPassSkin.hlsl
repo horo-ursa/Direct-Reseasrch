@@ -64,8 +64,11 @@ GPassOut PS(in VertexToPixel input)
     output.Depth = float4(scr.z, input.vDepth, viewPos.z, 1.0);
 
 
+    float4 psPosLightSpace = mul(input.worldPosition, c_lightSpaceViewProj);
+    float pcssShaodw = PCSS(psPosLightSpace);
+
     float inshadow = SimpleShadowMap(input.worldPosition, 0.001);
-    output.Shadow = float4(inshadow, inshadow, inshadow, 1.0);
+    output.Shadow = float4(pcssShaodw, inshadow, inshadow, 1.0);
 
     return output;
 }
