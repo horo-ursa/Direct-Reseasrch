@@ -1,0 +1,40 @@
+﻿  pch.cpp
+  AlphaTestEffect.cpp
+  BasicEffect.cpp
+  BasicPostProcess.cpp
+  CommonStates.cpp
+  DDSTextureLoader.cpp
+  DGSLEffect.cpp
+  DGSLEffectFactory.cpp
+  DualPostProcess.cpp
+  DualTextureEffect.cpp
+  BinaryReader.cpp
+  EffectCommon.cpp
+  EffectFactory.cpp
+  EnvironmentMapEffect.cpp
+  GamePad.cpp
+  GeometricPrimitive.cpp
+  Geometry.cpp
+C:\660\Hair Tool\Direct-Reseasrch\external\DirectXTK\Src\Geometry.cpp(380,25): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\660\Hair Tool\Direct-Reseasrch\external\DirectXTK\Src\Geometry.cpp(381,24): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+  GraphicsMemory.cpp
+  Keyboard.cpp
+  Model.cpp
+  ModelLoadCMO.cpp
+  Generating Code...
+  Compiling...
+  ModelLoadSDKMESH.cpp
+  ModelLoadVBO.cpp
+  Mouse.cpp
+  NormalMapEffect.cpp
+  ScreenGrab.cpp
+  SimpleMath.cpp
+  SkinnedEffect.cpp
+  SpriteBatch.cpp
+  PrimitiveBatch.cpp
+  SpriteFont.cpp
+  ToneMapPostProcess.cpp
+  VertexTypes.cpp
+  WICTextureLoader.cpp
+  Generating Code...
+  DirectXTK.vcxproj -> C:\660\Hair Tool\Direct-Reseasrch\external\DirectXTK\Lib\Win32\Debug\DirectXTK.lib
